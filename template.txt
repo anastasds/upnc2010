@@ -1,0 +1,30 @@
+@NETWORK_SIZE
+2
+
+@PARAMS
+7
+a-ltp 0
+a-ltd 0
+theta-minus -41
+theta-plus -38
+tau-x 16
+tau-minus 10
+tau-plus 7
+
+@DEFAULT_STATE
+5
+u -60
+u-minus-bar -60
+u-plus-bar -60
+x 0
+x-bar 0
+
+@INIT_STATE
+0
+
+@CONNECTIVITY
+{total, random, defined}
+{if "defined"
+    [long presyanptic_neuron#, long_presynaptic_neuron#, double synaptic_weight, inhib/excit {1,-1}]
+    ...
+

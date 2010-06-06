@@ -1,0 +1,62 @@
+==19995== Memcheck, a memory error detector
+==19995== Copyright (C) 2002-2009, and GNU GPL'd, by Julian Seward et al.
+==19995== Using Valgrind-3.5.0 and LibVEX; rerun with -h for copyright info
+==19995== Command: ./a.out
+==19995== 
+* open_file_to_section(template.txt, @NETWORK_SIZE)
+* looking for "@NETWORK_SIZE", found "@NETWORK_SIZE"
+* open_file_to_section successful
+* network->size set to 1000
+* open_file_to_section(template.txt, @DEFAULT_STATE)
+* looking for "@DEFAULT_STATE", found "@NETWORK_SIZE"
+* looking for "@DEFAULT_STATE", found "1000"
+* looking for "@DEFAULT_STATE", found ""
+* looking for "@DEFAULT_STATE", found "@PARAMS"
+* looking for "@DEFAULT_STATE", found "1"
+* looking for "@DEFAULT_STATE", found "conductance 0.5"
+* looking for "@DEFAULT_STATE", found ""
+* looking for "@DEFAULT_STATE", found "@DEFAULT_STATE"
+* open_file_to_section successful
+* init_neuron_state->num_params set to 2
+==19995== Conditional jump or move depends on uninitialised value(s)
+==19995==    at 0x4089FB2: _IO_vfscanf (in /lib/libc-2.12.so)
+==19995==    by 0x4093E79: __isoc99_fscanf (in /lib/libc-2.12.so)
+==19995==    by 0x80488F2: init_init_neuron_state (neuron.c:46)
+==19995==    by 0x8048C8A: main (main.c:16)
+==19995== 
+==19995== Use of uninitialised value of size 4
+==19995==    at 0x8048903: init_init_neuron_state (neuron.c:49)
+==19995==    by 0x8048C8A: main (main.c:16)
+==19995== 
+==19995== Invalid read of size 4
+==19995==    at 0x8048903: init_init_neuron_state (neuron.c:49)
+==19995==    by 0x8048C8A: main (main.c:16)
+==19995==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==19995== 
+==19995== 
+==19995== Process terminating with default action of signal 11 (SIGSEGV)
+==19995==  Access not within mapped region at address 0x0
+==19995==    at 0x8048903: init_init_neuron_state (neuron.c:49)
+==19995==    by 0x8048C8A: main (main.c:16)
+==19995==  If you believe this happened as a result of a stack
+==19995==  overflow in your program's main thread (unlikely but
+==19995==  possible), you can try to increase the size of the
+==19995==  main thread stack using the --main-stacksize= flag.
+==19995==  The main thread stack size used in this run was 8388608.
+==19995== 
+==19995== HEAP SUMMARY:
+==19995==     in use at exit: 15,128 bytes in 1,008 blocks
+==19995==   total heap usage: 1,011 allocs, 3 frees, 15,640 bytes allocated
+==19995== 
+==19995== LEAK SUMMARY:
+==19995==    definitely lost: 0 bytes in 0 blocks
+==19995==    indirectly lost: 0 bytes in 0 blocks
+==19995==      possibly lost: 0 bytes in 0 blocks
+==19995==    still reachable: 15,128 bytes in 1,008 blocks
+==19995==         suppressed: 0 bytes in 0 blocks
+==19995== Rerun with --leak-check=full to see details of leaked memory
+==19995== 
+==19995== For counts of detected and suppressed errors, rerun with: -v
+==19995== Use --track-origins=yes to see where uninitialised values come from
+==19995== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 13 from 8)
+segmentation fault

@@ -1,0 +1,30 @@
+#include <gsl_odeiv.h>
+
+struct neuron_node {
+  struct neuron * neuron;
+  struct neuron_node * next;
+};
+
+struct neuron_ll {
+  struct neuron_node * head;
+};
+
+struct neuron {
+  struct neuron_parameters * params;
+  struct neuron_state * state;
+  struct neuron_ll * links;
+};
+
+struct neuron_state {
+
+};
+
+struct neuron_parameters {
+
+};
+
+int main( int argc, char** argv)
+{
+  printf("Hello, world!\n");
+  return 0;
+}
