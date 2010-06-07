@@ -1,0 +1,29 @@
+@NETWORK_SIZE
+[long number of neurons in network]
+
+@PARAMS
+[int number of params]
+[char * param name] [float param value]
+...
+
+@DEFAULT_STATE
+[int number of params]
+[char * param name] [ float param value]
+...
+
+@INIT_STATE
+[int number of neurons with differing initial states]
+[int neuron id] [list of parameter values in same order as in @DEFAULT_STATE]
+...
+
+@LINKS
+[total | random | defined]
+[
+	if total:
+	   [float initial weight] [default conductance time]
+	if random:
+	   [float probability two neurons are connected] [0|1 random weights?] [default weight] [0|1 random ctimes?] [default ctime]
+	if defined:
+	   [int from_id] [int to_id] [float weight] [conductance_time]
+	   ...
+]

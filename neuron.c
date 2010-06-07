@@ -19,6 +19,8 @@ struct network * create_network(char * filename)
 struct neuron * create_neuron()
 {
   struct neuron * new_neuron = malloc(sizeof(struct neuron));
+  new_neuron->num_links = 0;
+  new_neuron->links = NULL;
   return new_neuron;
 }
 
@@ -109,6 +111,11 @@ void assoc_network_params(struct network * network, struct neuron_params * param
 
 void destroy_network_params(struct neuron_params * params)
 {
+  int i;
+  for(i = 0; i < params->num_params; i++)
+    free(params->names[i]);
+  free(params->names);
+  free(params->values);
   free(params);
 }
 
@@ -132,6 +139,12 @@ void destroy_network(struct network * network)
       free(network->neurons[i]->state->names);
       free(network->neurons[i]->state->values);
       free(network->neurons[i]->state);
+      if(network->neurons[i]->num_links > 0)
+	{
+	  for(j = 0; j < network->neurons[i]->num_links; j++)
+	    free(network->neurons[i]->links[j]);
+	  free(network->neurons[i]->links);
+	}
       free(network->neurons[i]);
     }
   free(network->neurons);
@@ -185,4 +198,118 @@ void remove_newline(char * line)
   while(*(line + i++) != '\n');
   if(i-1 <= MAX_LINE_LEN)
     line[i-1] = '\0';
+}
+
+void link_neurons(struct network * network, char * filename)
+{
+  long i, j, from, to;
+  float weight, ctime;
+  char line[MAX_LINE_LEN];
+
+  if(DEBUG > 0)
+    printf("* link_neurons\n");
+
+  FILE * fp = open_file_to_section(filename, "@LINKS");
+  
+  if(fgets(line, MAX_LINE_LEN, fp) == NULL)
+    {
+      printf("Error reading first line after @LINKS.\n");
+      exit(-1);
+    }
+
+  remove_newline(line);
+  if(strcmp(line, "total") == 0)
+    {
+      if(DEBUG > 0)
+	printf("* totally connected network selected\n");
+      if(fgets(line, MAX_LINE_LEN, fp) == NULL)
+	{
+	  printf("Error reading second line after @LINKS.\n");
+	  exit(-1);
+	}
+      
+      sscanf(line, "%f %f", &weight, &ctime);
+      if(DEBUG > 0)
+	printf("* link weights %f, conductance times %f\n", weight, ctime);
+
+      for(i = 0; i < network->size; i++)
+	{
+	  network->neurons[i]->num_links = network->size - 1;
+	  network->neurons[i]->links = malloc((network->size - 1) * sizeof(struct neuron_link *));
+	  for(j = 0; j < i; j++)
+	    {
+	      network->neurons[i]->links[j] = create_link(j, weight, ctime);
+	      if(DEBUG > 1)
+		printf("* creating link from %ld to %ld\n", i, j);
+	    }
+
+	  for(j = i+1; j < network->size; j++)
+	    {
+	      network->neurons[i]->links[j-1] = create_link(j, weight, ctime);
+	      if(DEBUG > 1)
+		printf("* creating link from %ld to %ld\n", i, j);
+	    }
+	}
+    }
+  else if(strcmp(line,"random") == 0)
+    {
+      printf("There is no support for randomly connected networks as of yet.\n");
+    }
+  else if(strcmp(line,"defined") == 0)
+    {
+      if(DEBUG > 0)
+	printf("* specifically defined network selected\n");
+
+      while(fgets(line, MAX_LINE_LEN, fp) != NULL && strlen(line) > 0)
+	{
+	  sscanf(line, "%ld", &from);
+	  if(DEBUG > 1)
+	    printf("found link from neuron #%ld\n",from);
+	  network->neurons[from]->num_links++;
+	}
+      fclose(fp);
+
+      int * num_created = malloc(network->size * sizeof(int));
+      memset(num_created, 0, network->size * sizeof(int));
+      for(i = 0; i < network->size; i++)
+	{
+	  if(network->neurons[i]->num_links > 0)
+	    network->neurons[i]->links = (struct neuron_link **)malloc(network->neurons[i]->num_links * sizeof(struct neuron_link *));
+	}
+
+      fp = open_file_to_section(filename, "@LINKS");
+      fgets(line, MAX_LINE_LEN, fp);
+      while(fgets(line, MAX_LINE_LEN, fp) != NULL)
+	{
+	  sscanf(line, "%ld %ld %f %f", &from, &to, &weight, &ctime);
+	  network->neurons[from]->links[num_created[from]++] = create_link(to, weight, ctime);
+	  if(DEBUG > 1)
+	      printf("* link from %ld to %ld, weight %f, ctime %f\n", from, to, weight, ctime);
+	}
+
+      for(i = 0; i < network->size; i++)
+	{
+	  if(network->neurons[i]->num_links != num_created[i])
+	    {
+	      printf("Error occurred while creating network links.\n");
+	      exit(-1);
+	    }
+	}
+      free(num_created);
+    }
+  else
+    {
+      printf("Unknown network architecture chosen: %s\n",line);
+      exit(-1);
+    }
+  fclose(fp);
+}
+
+struct neuron_link * create_link(long to, float weight, float ctime)
+{
+  struct neuron_link * link = malloc(sizeof(struct neuron_link));
+  link->to = to;
+  link->weight = weight;
+  link->conduction_time = ctime;
+  return link;
 }
