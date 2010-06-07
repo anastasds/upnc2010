@@ -47,7 +47,8 @@ struct neuron_params * init_neuron_params(char * filename)
 	  printf("* params->names[%d]: %s = %f\n", i, params->names[i], params->values[i]);
     }
   fclose(fp);
-  printf("* init_neuron_params successful\n");
+  if(DEBUG > 0)
+    printf("* init_neuron_params successful\n");
   return params;
 }
 
@@ -74,7 +75,8 @@ struct neuron_state * init_init_neuron_state(char * filename)
 	  printf("* state->names[%d]: %s = %f\n", i, state->names[i], state->values[i]);
     }
   fclose(fp);
-  printf("* init_init_neuron_state successful\n");
+  if(DEBUG > 0)
+    printf("* init_init_neuron_state successful\n");
   return state;
 }
 
@@ -398,4 +400,73 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
 
   free(link_queue);
   free(num_created);
+}
+
+void output_state(struct network * network, struct neuron_state * state, struct neuron_params * params, char * filename)
+{
+  FILE * fp;
+  long i,j;
+  char tmp[20];
+  char line[MAX_LINE_LEN];
+
+  if((fp = fopen(filename, "wt")) == NULL)
+    {
+      printf("Could not open output file for writing.\n");
+      exit(-1);
+    }
+
+  sprintf(line, "@NETWORK_SIZE\n%ld\n\n", network->size);
+  write_to_file(fp, line);
+
+  sprintf(line, "@PARAMS\n%d\n", params->num_params);
+  write_to_file(fp, line);
+
+  for(i = 0; i < params->num_params; i++)
+    {
+      sprintf(line,"%s %f\n", params->names[i], params->values[i]);
+      write_to_file(fp, line);
+    }
+
+  sprintf(line, "\n@DEFAULT_STATE\n%d\n", state->num_params);
+  write_to_file(fp, line);
+
+  for(i = 0; i < state->num_params; i++)
+    {
+      sprintf(line,"%s %f\n", state->names[i], state->values[i]);
+      write_to_file(fp, line);
+    }
+
+  sprintf(line, "\n@INIT_STATE\n");
+  write_to_file(fp, line);
+
+  for(i = 0; i < network->size; i++)
+    {
+      sprintf(line, "%ld", i);
+      for(j = 0; j < state->num_params; j++)
+	{
+	  sprintf(tmp, " %f", network->neurons[i]->state->values[j]);
+	  strcat(line, tmp);
+	}
+      strcat(line, "\n");
+      write_to_file(fp,line);
+    }
+
+  sprintf(line, "\n@LINKS\ndefined\n");
+  write_to_file(fp, line);
+
+  for(i = 0; i < network->size; i++)
+    {
+      for(j = 0; j < network->neurons[i]->num_links; j++)
+	{
+	  sprintf(line, "%ld %ld %f %f\n", i, network->neurons[i]->links[j]->to, network->neurons[i]->links[j]->weight, network->neurons[i]->links[j]->conduction_time);
+	  write_to_file(fp, line);
+	}
+    }
+  fclose(fp);
+
+}
+
+void write_to_file(FILE * fp, char * line)
+{
+  fwrite(line, sizeof(char), strlen(line), fp);
 }
