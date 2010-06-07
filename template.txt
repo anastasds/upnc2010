@@ -1,5 +1,5 @@
 @NETWORK_SIZE
-2
+1000
 
 @PARAMS
 7
@@ -23,7 +23,5 @@ x-bar 0
 0
 
 @LINKS
-defined
-0 1 0.5 0.1
-1 0 0.1 0.5
-
+random
+0.5 1 0.5 1 1

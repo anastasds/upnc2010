@@ -30,6 +30,7 @@ struct neuron_link {
 
 struct link_queue {
   struct link_node * head;
+  struct link_node * tail;
 };
 
 struct link_node {
@@ -37,6 +38,7 @@ struct link_node {
   long to;
   float weight;
   float ctime;
+  struct link_node * next;
 };
 
 struct network * create_network(char * filename);
@@ -54,3 +56,5 @@ FILE * open_file_to_section(char * filename, char * section);
 void remove_newline(char * line);
 void link_neurons(struct network * network, char * filename);
 struct neuron_link * create_link(long to, float weight, float ctime);
+void queue_link(struct link_queue * link_queue, long from, long to, float weight, float ctime);
+void create_queued_links(struct network * network, struct link_queue * link_queue);
