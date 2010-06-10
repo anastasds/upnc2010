@@ -26,6 +26,7 @@ int main(int argc, char** argv)
   struct neuron_state * init_neuron_state = init_init_neuron_state(input_filename);
   
   init_network_states(network, init_neuron_state);
+  init_nondefault_states(network, input_filename);
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
 

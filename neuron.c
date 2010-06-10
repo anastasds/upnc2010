@@ -20,6 +20,8 @@ struct neuron * create_neuron()
 {
   struct neuron * new_neuron = malloc(sizeof(struct neuron));
   new_neuron->num_links = 0;
+  new_neuron->state = NULL;
+  new_neuron->params = NULL;
   new_neuron->links = NULL;
   return new_neuron;
 }
@@ -85,6 +87,74 @@ void init_network_states(struct network * network, struct neuron_state * init_ne
   long i;
   for(i = 0; i < network->size; i++)
     network->neurons[i]->state = copy_neuron_state(init_neuron_state);
+}
+
+void init_nondefault_states(struct network * network, char * filename)
+{
+  FILE * fp;
+  int num_params, num_read;
+  long i, n;
+  float param;
+  char *tmp, *line = malloc(MAX_LINE_LEN * sizeof(char));;
+  tmp = line;
+
+  if(network->size == 0)
+    {
+      printf("init_nondefault_states(): network has size 0\n");
+      exit(-1);
+    }
+  if(network->neurons == NULL)
+    {
+      printf("init_nondefault_states() called with null network->neurons despite nonzero network size\n");
+      exit(-1);
+    }
+  if(network->neurons[0] == NULL)
+    {
+      printf("init_nondefault_states() called with null network->neurons[0] despite nonzero network size\n");
+      exit(-1);
+    }
+  if(network->neurons[0]->state == NULL)
+    {
+      printf("init_nondefault_states() called before init_network_states, apparently\n");
+      exit(-1);
+    }
+
+  num_params = network->neurons[0]->state->num_params;
+
+  fp = open_file_to_section(filename, "@INIT_STATES");
+  fgets(line, MAX_LINE_LEN, fp);
+  remove_newline(line);
+  while(strcmp(line,"") != 0 && strcmp(line,"0") != 0)
+    {
+      sscanf(line, "%ld%n", &n, &num_read);
+      if(n < 0 || n > network->size)
+	{
+	  printf("@INIT_STATES tried to set neuron %ld's state despite network size of %ld\n",n, network->size);
+	  exit(-1);
+	}
+      if(network->neurons[n]->state == NULL)
+	{
+	  printf("init_nondefault_states(): neuron %ld has NULL state\n", n);
+	  exit(-1);
+	}
+      if(network->neurons[n]->state->values == NULL)
+	{
+	  printf("init_nondefault_states(): neuron %ld has NULL state->values\n", n);
+	  exit(-1);
+	}
+      line += num_read;
+      for(i = 0; i < num_params; i++)
+	{
+	  sscanf(line, "%f%n", &param, &num_read);
+	  network->neurons[n]->state->values[i] = param;
+	  line += num_read;
+	}
+      line = tmp;
+      fgets(line, MAX_LINE_LEN, fp);
+      remove_newline(line);
+    }
+  fclose(fp);
+  free(line);
 }
 
 struct neuron_state * copy_neuron_state(struct neuron_state * init_neuron_state)
@@ -436,7 +506,7 @@ void output_state(struct network * network, struct neuron_state * state, struct 
       write_to_file(fp, line);
     }
 
-  sprintf(line, "\n@INIT_STATE\n");
+  sprintf(line, "\n@INIT_STATES\n");
   write_to_file(fp, line);
 
   for(i = 0; i < network->size; i++)

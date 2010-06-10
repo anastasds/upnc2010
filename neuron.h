@@ -60,3 +60,4 @@ void queue_link(struct link_queue * link_queue, long from, long to, float weight
 void create_queued_links(struct network * network, struct link_queue * link_queue);
 void output_state(struct network * network, struct neuron_state * state, struct neuron_params * params, char * filename);
 void write_to_file(FILE * fp, char * line);
+void init_nondefault_states(struct network * network, char * filename);
