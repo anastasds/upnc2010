@@ -1,3 +1,6 @@
+#include "definitions.h"
+#include "includes.h"
+
 struct network * create_network(char * filename)
 {
   long i;

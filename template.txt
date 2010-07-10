@@ -2,25 +2,41 @@
 2
 
 @PARAMS
-7
-a-ltp 0
-a-ltd 0
-theta-minus -41
-theta-plus -38
-tau-x 16
-tau-minus 10
-tau-plus 7
+14
+V_T 25
+C_m 1.0
+g-bar_Na 120.0
+g-bar_K 36.0
+g-bar_L 0.3
+E_Na 50.0
+E_K -77.0
+E_L -54.402
+A_alpha 1.22
+B_alpha -1.0
+A_beta 0.056
+B_beta 0.3125
+A 0.1e-5
+I_e 60.0
+
+c_m = 
+A =  0.00001 to 0.0001
+V_t = 24 to 27, say 25
+
+C_m: 0.1 to 1 nF
+R_m: 10 to 100 M\omega
+n 0.417938
+m 0.109496
+h 0.596121
 
 @DEFAULT_STATE
-5
-u -60
-u-minus-bar -60
-u-plus-bar -60
-x 0
-x-bar 0
+4
+V -65.0
+n 0.3177
+m 0.0529
+h 0.5981
 
 @INIT_STATES
-1 1 2 3 4 5
+
 
 @LINKS
 defined

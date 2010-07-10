@@ -1,3 +1,6 @@
+#include "definitions.h"
+#include "includes.h"
+
 char * get_input_filename(int argc, char** argv)
 {
   char * input_filename;

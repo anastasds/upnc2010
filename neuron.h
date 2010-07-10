@@ -1,3 +1,6 @@
+#ifndef NEURON_H
+#define NEURON_H
+
 struct neuron {
   int num_links;
   struct neuron_state * state;
@@ -15,6 +18,11 @@ struct neuron_params {
   int num_params;
   char ** names;
   float * values;
+};
+
+struct neuron_ode_params {
+  struct neuron_state * state;
+  struct neuron_params * params;
 };
 
 struct network {
@@ -61,3 +69,5 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
 void output_state(struct network * network, struct neuron_state * state, struct neuron_params * params, char * filename);
 void write_to_file(FILE * fp, char * line);
 void init_nondefault_states(struct network * network, char * filename);
+
+#endif
