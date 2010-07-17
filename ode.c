@@ -2,21 +2,12 @@
 #include "includes.h"
 #include "math_includes.h"
 #include "neuron.h"
-#include "ode_unthreaded.h"
+#include "ode.h"
 
-// f[0] - V', f[1] - n', f[2] - m', f[3] - h'
-
-int hh_ode(double t, const double y[], double f[], void *params)
+void * ode_update_neurons_threaded(void * thread_params)
 {
-  struct network * network = (struct network *)params;
-  if(network->size < 1)
-    {
-      printf("[in ODE simulation] network size was less than one\n");
-      exit(-1);
-    }
-
-  ode_update_neurons(network, 0, network->size, y, f);
-  return GSL_SUCCESS;
+    struct thread_params * params = (struct thread_params *)thread_params;
+    ode_update_neurons(params->network, params->start, params->num, params->y, params->f);
 }
 
 void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f)
@@ -29,7 +20,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 
   if(network->size < limit)
     limit = network->size;
-  
+
   // get general network parameters that are the same for each neuron
   network_params = network->neurons[0]->params;
   C_m = network_params->values[0];
@@ -74,6 +65,9 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       f[4*i + 2] = (m_inf - y[4*i + 2])/(tau_m);
       f[4*i + 3] = (h_inf - y[4*i + 3])/(tau_h);
     }
+  #ifdef THREADED
+    pthread_exit(NULL);
+  #endif
 }
 
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
@@ -88,7 +82,11 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
   gsl_odeiv_evolve * e = gsl_odeiv_evolve_alloc(dimension);
 
   // params: function, [jacobian], dimension, void * params
-  gsl_odeiv_system sys = {hh_ode, NULL, dimension, network};
+  #ifdef THREADED
+    gsl_odeiv_system sys = {hh_ode_threaded, NULL, dimension, network};
+  #else
+    gsl_odeiv_system sys = {hh_ode, NULL, dimension, network};
+  #endif
 
   // set up ode system, four odes per neuron
   // 0 = V, 1 = n, 2 = m, 3 = h
@@ -110,12 +108,92 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
     }
   // GSL HAS EVOLVED INTO... HODGKIN-HUXLEY!
   
-  gsl_odeiv_evolve_free (e);
-  gsl_odeiv_control_free (c);
-  gsl_odeiv_step_free (s);
+  gsl_odeiv_evolve_free(e);
+  gsl_odeiv_control_free(c);
+  gsl_odeiv_step_free(s);
 
   return 0;
 }
 
+int hh_ode(double t, const double y[], double f[], void *params)
+{
+  struct network * network = (struct network *)params;
+  if(network->size < 1)
+    {
+      printf("[in ODE simulation] network size was less than one\n");
+      exit(-1);
+    }
 
+  ode_update_neurons(network, 0, network->size, y, f);
+  return GSL_SUCCESS;
+}
 
+#ifdef THREADED
+int hh_ode_threaded(double t, const double y[], double f[], void *params)
+{
+  struct thread_params ** thread_params = (struct thread_params **)malloc(NUM_THREADS * sizeof(struct thread_params *));
+  struct network * network = (struct network *)params;
+  long i, neurons_per_thread, limit, threads_spawned;
+  pthread_t * threads;
+  pthread_attr_t attr;
+  void * status;
+  int rc;
+
+  // make sure everything's there
+  if(network->size < 1)
+    {
+      printf("[in ODE simulation] network size was less than one\n");
+      exit(-1);
+    }
+
+  // make threads joinable
+  //pthread_attr_init(&attr);
+  //pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+  neurons_per_thread = (long)network->size / NUM_THREADS;
+  if(neurons_per_thread == 0)
+    {
+      neurons_per_thread = 1;
+      threads_spawned = network->size;
+    }
+  else
+    {
+      threads_spawned = (long)network->size / neurons_per_thread + (network->size % neurons_per_thread == 0 ? 0 : 1);
+    }
+  threads = (pthread_t *)malloc(threads_spawned * sizeof(pthread_t));
+
+  i = 0;
+  while(i*neurons_per_thread < network->size)
+    {
+      thread_params[i] = (struct thread_params *)malloc(sizeof(struct thread_params));
+      thread_params[i]->thread_id = i;
+      thread_params[i]->network = network;
+      thread_params[i]->start = i * neurons_per_thread;
+      thread_params[i]->num = neurons_per_thread;
+      thread_params[i]->y = y;
+      thread_params[i]->f = f;
+      thread_params[i]->t = t;
+      rc = pthread_create(&(threads[i]), NULL, ode_update_neurons_threaded, (void*)thread_params[i]);
+
+      if(rc)
+	{
+	  printf("pthread_create() error: $d\n",rc);
+	  exit(-1);
+	}
+      i++;
+    }
+
+  //pthread_attr_destroy(&attr);
+  for(i = 0; i < threads_spawned; i++)
+    {
+      rc = pthread_join(threads[i], &status);
+      if(rc)
+	{
+	  printf("pthread_join() error: %d\n",rc);
+	  exit(-1);
+	}
+    }
+  
+  return GSL_SUCCESS;
+}
+#endif

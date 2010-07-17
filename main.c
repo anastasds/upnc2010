@@ -22,11 +22,7 @@ int main(int argc, char** argv)
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
 
-  #ifdef THREADED
-    ode_run_threaded(network, 0, 100.0, 1.0e-6, 1.0e-6);
-  #else
-    ode_run(network, 0, 100.0, 1.0e-6, 1.0e-6);
-  #endif
+  ode_run(network, 0, 100.0, 1.0e-6, 1.0e-6);
 
   if(argc > 2) output_state(network, init_neuron_state, params, argv[2]);
   else if(argc < 2) free(input_filename);
