@@ -22,7 +22,7 @@ general.o: $(COMMON_INCLUDES) general.h general.c Makefile
 	$(CC) $(CFLAGS) -c general.c
 
 ode_unthreaded.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) ode.h ode.c Makefile
-	$(CC) $(CFLAGS) $(GSLFLAGS) -pthread -c ode.c -o ode_unthreaded.o
+	$(CC) $(CFLAGS) $(GSLFLAGS) -c ode.c -o ode_unthreaded.o
 
 ode_threaded.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) ode.h ode.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) -pthread -DTHREADED -c ode.c -o ode_threaded.o
