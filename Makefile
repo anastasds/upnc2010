@@ -27,7 +27,7 @@ ode_unthreaded.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) ode.h ode.c Makefile
 ode_threaded.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) ode.h ode.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) -pthread -DTHREADED -c ode.c -o ode_threaded.o
 
-main.o: $(COMMON_INCLUDES) general.h neuron.h ode_threaded.h main.c Makefile
+main.o: $(COMMON_INCLUDES) general.h neuron.h ode.h main.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) $(THREADING) -c main.c
 
 clean:
