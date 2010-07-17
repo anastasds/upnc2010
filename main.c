@@ -1,6 +1,9 @@
 #include "definitions.h"
 #include "includes.h"
 #include "math_includes.h"
+#include "general.h"
+#include "neuron.h"
+#include "ode.h"
 
 int main(int argc, char** argv)
 {
@@ -14,7 +17,8 @@ int main(int argc, char** argv)
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
 
-  ode_test(network->neurons[0]->state,params);
+  //t = t_i, t1 = t_f in ms
+  ode_run(network, 0, 100.0, 1.0e-6, 1.0e-6);
 
   if(argc > 2) output_state(network, init_neuron_state, params, argv[2]);
   else if(argc < 2) free(input_filename);

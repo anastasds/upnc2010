@@ -2,8 +2,7 @@
 2
 
 @PARAMS
-14
-V_T 25
+8
 C_m 1.0
 g-bar_Na 120.0
 g-bar_K 36.0
@@ -11,22 +10,7 @@ g-bar_L 0.3
 E_Na 50.0
 E_K -77.0
 E_L -54.402
-A_alpha 1.22
-B_alpha -1.0
-A_beta 0.056
-B_beta 0.3125
-A 0.1e-5
 I_e 60.0
-
-c_m = 
-A =  0.00001 to 0.0001
-V_t = 24 to 27, say 25
-
-C_m: 0.1 to 1 nF
-R_m: 10 to 100 M\omega
-n 0.417938
-m 0.109496
-h 0.596121
 
 @DEFAULT_STATE
 4

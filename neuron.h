@@ -20,11 +20,6 @@ struct neuron_params {
   float * values;
 };
 
-struct neuron_ode_params {
-  struct neuron_state * state;
-  struct neuron_params * params;
-};
-
 struct network {
   long size;
   struct neuron ** neurons;
