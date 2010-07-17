@@ -1,8 +1,3 @@
-#include "definitions.h"
-#include "includes.h"
-#include "math_includes.h"
-#include "neuron.h"
-
 #ifndef ODE_H
 #define ODE_H
 

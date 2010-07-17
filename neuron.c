@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "includes.h"
+#include "neuron.h"
 
 struct network * create_network(char * filename)
 {
