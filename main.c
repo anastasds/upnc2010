@@ -3,12 +3,7 @@
 #include "math_includes.h"
 #include "general.h"
 #include "neuron.h"
-
-#ifdef THREADED
-  #include "ode_threaded.h"
-#else
-  #include "ode_unthreaded.h"
-#endif
+#include "ode.h"
 
 int main(int argc, char** argv)
 {
