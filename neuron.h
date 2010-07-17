@@ -2,13 +2,12 @@
 #define NEURON_H
 
 struct thread_params {
-  long thread_id;
   struct network * network;
-  long start;
-  long num;
   const double * y;
   double * f;
   double t;
+  long start;
+  long num;
 };
 
 struct neuron {

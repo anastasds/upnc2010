@@ -16,7 +16,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   double alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h, i_m;
   double tau_n, tau_m, tau_h, n_inf, m_inf, h_inf;
   struct neuron_params * network_params;
-  long i, limit = start + num;
+  long i, j, num_state_params, limit = start + num;
 
   if(network->size < limit)
     limit = network->size;
@@ -31,14 +31,13 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   E_K = network_params->values[5];
   E_L = network_params->values[6];
   I_e = network_params->values[7];
+  num_state_params = network->neurons[start]->state->num_params;
 
   for(i = start; i < limit; i++)
     {
       //update params in neuron_state
-      network->neurons[i]->state->values[0] = y[4*i];
-      network->neurons[i]->state->values[1] = y[4*i + 1];
-      network->neurons[i]->state->values[2] = y[4*i + 2];
-      network->neurons[i]->state->values[3] = y[4*i + 3];
+      for(j = 0; j < network->neurons[i]->state->num_params; j++)
+	network->neurons[i]->state->values[j] = y[4*i + j];
 
       // find dn/dt, dm/dt, dh/dt usig some intermediate values
       alpha_n = 0.01*(y[4*i] + 55)/(1 - exp(-0.1*(y[4*i]+55.0)));
@@ -60,10 +59,10 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       i_m = g_bar_L*(y[4*i] - E_L) + g_bar_K*pow(y[4*i + 1],4.0)*(y[4*i] - E_K) + g_bar_Na*pow(y[4*i + 2],3)*y[4*i + 3]*(y[4*i] - E_Na);
       
       // update dx_i/dt, x_i \in {v,n,m,h}
-      f[4*i] = I_e + -1.0*i_m/C_m;
-      f[4*i + 1] = (n_inf - y[4*i + 1])/(tau_n);
-      f[4*i + 2] = (m_inf - y[4*i + 2])/(tau_m);
-      f[4*i + 3] = (h_inf - y[4*i + 3])/(tau_h);
+      f[num_state_params*i] = I_e + -1.0*i_m/C_m;
+      f[num_state_params*i + 1] = (n_inf - y[4*i + 1])/(tau_n);
+      f[num_state_params*i + 2] = (m_inf - y[4*i + 2])/(tau_m);
+      f[num_state_params*i + 3] = (h_inf - y[4*i + 3])/(tau_h);
     }
   #ifdef THREADED
     pthread_exit(NULL);
@@ -74,7 +73,7 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 {
   const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
   long dimension = network->size * 4;
-  long i = 0;
+  long i, j, num_state_params;
   int status;
 
   gsl_odeiv_step * s = gsl_odeiv_step_alloc(T, dimension);
@@ -90,23 +89,18 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
   // set up ode system, four odes per neuron
   // 0 = V, 1 = n, 2 = m, 3 = h
-  double y[4*network->size];
+  num_state_params = network->neurons[0]->state->num_params;
+  double y[num_state_params * network->size];
   for(i = 0; i < network->size; i++)
-    {
-      y[4*i] = network->neurons[i]->state->values[0];
-      y[4*i + 1] = network->neurons[i]->state->values[1];
-      y[4*i + 2] = network->neurons[i]->state->values[2];
-      y[4*i + 3] = network->neurons[i]->state->values[3];
-    }
+      for(j = 0; j < network->neurons[i]->state->num_params; j++)
+	y[num_state_params*i + j] = network->neurons[i]->state->values[j];
 
-  // GSL IS EVOLVING!
   while (t < t1)
     {
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
     }
-  // GSL HAS EVOLVED INTO... HODGKIN-HUXLEY!
   
   gsl_odeiv_evolve_free(e);
   gsl_odeiv_control_free(c);
@@ -166,7 +160,6 @@ int hh_ode_threaded(double t, const double y[], double f[], void *params)
   while(i*neurons_per_thread < network->size)
     {
       thread_params[i] = (struct thread_params *)malloc(sizeof(struct thread_params));
-      thread_params[i]->thread_id = i;
       thread_params[i]->network = network;
       thread_params[i]->start = i * neurons_per_thread;
       thread_params[i]->num = neurons_per_thread;
@@ -183,7 +176,6 @@ int hh_ode_threaded(double t, const double y[], double f[], void *params)
       i++;
     }
 
-  //pthread_attr_destroy(&attr);
   for(i = 0; i < threads_spawned; i++)
     {
       rc = pthread_join(threads[i], &status);
@@ -193,7 +185,11 @@ int hh_ode_threaded(double t, const double y[], double f[], void *params)
 	  exit(-1);
 	}
     }
-  
+
+  for(i = 0; i < threads_spawned; i++)
+    free(thread_params[i]);
+  free(thread_params);
+  free(threads);
   return GSL_SUCCESS;
 }
 #endif
