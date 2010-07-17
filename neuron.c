@@ -2,6 +2,9 @@
 #include "includes.h"
 #include "neuron.h"
 
+// initializes struct network of size specified in input file;
+// creates each neuron in the network using create_neuron();
+// returns pointer to network
 struct network * create_network(char * filename)
 {
   long i;
@@ -20,6 +23,9 @@ struct network * create_network(char * filename)
   return network;
 }
 
+// malloc()'s a new struct neuron;
+// initializes elements to 0 or NULL;
+// returns pointer;
 struct neuron * create_neuron()
 {
   struct neuron * new_neuron = malloc(sizeof(struct neuron));
@@ -30,6 +36,9 @@ struct neuron * create_neuron()
   return new_neuron;
 }
 
+// opens config file to @PARAMS;
+// malloc()s struct network_params, populates it from config file;
+// returns pointer to network parameters struct
 struct neuron_params * init_neuron_params(char * filename)
 {
   int i = 0;
@@ -58,6 +67,9 @@ struct neuron_params * init_neuron_params(char * filename)
   return params;
 }
 
+// malloc()s a neuron_state with state variables set to values
+// defined to be default in @DEFAULT_STATE section of config file;
+// returns pointer to neuron_state()
 struct neuron_state * init_init_neuron_state(char * filename)
 {
   int i = 0;
@@ -86,6 +98,8 @@ struct neuron_state * init_init_neuron_state(char * filename)
   return state;
 }
 
+// copies default neuron states as defined in init_init_neuron_state()
+// to each neurons in the network
 void init_network_states(struct network * network, struct neuron_state * init_neuron_state)
 {
   long i;
@@ -93,6 +107,8 @@ void init_network_states(struct network * network, struct neuron_state * init_ne
     network->neurons[i]->state = copy_neuron_state(init_neuron_state);
 }
 
+// parses @INIT_STATES to update network neurons to initial state variable values that
+// differ from the default values set in @DEFAULT_STATE of config file
 void init_nondefault_states(struct network * network, char * filename)
 {
   FILE * fp;
@@ -161,6 +177,9 @@ void init_nondefault_states(struct network * network, char * filename)
   free(line);
 }
 
+// malloc()s a new struct neuron_state;
+// copies all struct elements from given neuron_state to the new one;
+// returns pointer to new neuron_state
 struct neuron_state * copy_neuron_state(struct neuron_state * init_neuron_state)
 {
   int i = 0;
@@ -178,6 +197,8 @@ struct neuron_state * copy_neuron_state(struct neuron_state * init_neuron_state)
   return new_state;
 }
 
+// links all network neurons to a single neuron_params struct;
+// this means that neuron_params values are constant throughout the network
 void assoc_network_params(struct network * network, struct neuron_params * params)
 {
   long i;
@@ -185,6 +206,7 @@ void assoc_network_params(struct network * network, struct neuron_params * param
     network->neurons[i]->params = params;
 }
 
+// cleanup function
 void destroy_network_params(struct neuron_params * params)
 {
   int i;
@@ -195,6 +217,7 @@ void destroy_network_params(struct neuron_params * params)
   free(params);
 }
 
+// cleanup function
 void destroy_init_neuron_state(struct neuron_state * init_neuron_state)
 {
   int i;
@@ -205,6 +228,7 @@ void destroy_init_neuron_state(struct neuron_state * init_neuron_state)
   free(init_neuron_state);
 }
 
+// cleanup function
 void destroy_network(struct network * network)
 {
   long i, j;
@@ -227,6 +251,7 @@ void destroy_network(struct network * network)
   free(network);
 }
 
+// cleanup function
 void cleanup(struct network * network, struct neuron_state * init_neuron_state, struct neuron_params * params)
 {
   destroy_network_params(params);
@@ -234,6 +259,8 @@ void cleanup(struct network * network, struct neuron_state * init_neuron_state, 
   destroy_network(network);
 }
 
+// opens given file, moves file pointer to the line following the
+// string specified in char*section, and returns file pointer
 FILE * open_file_to_section(char * filename, char * section)
 {
   FILE * fp;
@@ -268,6 +295,9 @@ FILE * open_file_to_section(char * filename, char * section)
   exit(-1);
 }
 
+// strips trailing \n from given string if it in offset MAX_LINE_LEN or less;
+// char *s that are given to this function generally contain data read from a file,
+// so they are generally allocated of max size MAX_LINE_LEN, so this should be fine
 void remove_newline(char * line)
 {
   int i = 0;
@@ -276,6 +306,7 @@ void remove_newline(char * line)
     line[i-1] = '\0';
 }
 
+// parses config file's @LINKS section to create links between neurons
 void link_neurons(struct network * network, char * filename)
 {
   int random_weights, random_ctimes;
@@ -404,6 +435,9 @@ void link_neurons(struct network * network, char * filename)
   fclose(fp);
 }
 
+// maloc()s a struct neuron_link;
+// populates it with given data;
+// returns pointer to new struct
 struct neuron_link * create_link(long to, float weight, float ctime)
 {
   struct neuron_link * link = malloc(sizeof(struct neuron_link));
@@ -417,6 +451,10 @@ struct neuron_link * create_link(long to, float weight, float ctime)
   return link;
 }
 
+// neuron structs have a "links" pointer and a num_links param, but the num_links cannot be
+// determined and used to allocate the links struct without having read the entire @LINKS
+// section; therefore, a linked list of links to be created is made as @LINKS is parsed,
+// and this list is later gone through using create_queued_links
 void queue_link(struct link_queue * link_queue, long from, long to, float weight, float ctime)
 {
   struct link_node * node = malloc(sizeof(struct link_node));
@@ -438,6 +476,8 @@ void queue_link(struct link_queue * link_queue, long from, long to, float weight
     }  
 }
 
+// goes through the linked list of links to create and actually makes them, i.e.
+// updates the neuron structs appropriately
 void create_queued_links(struct network * network, struct link_queue * link_queue)
 {
   struct link_node * node, *old_node;
@@ -476,6 +516,8 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
   free(num_created);
 }
 
+// takes the current state of the network and outputs it into a file (with filename given) formatted
+// as a config file so that we can analyze the data or use it to progress the simulation later
 void output_state(struct network * network, struct neuron_state * state, struct neuron_params * params, char * filename)
 {
   FILE * fp;
@@ -540,6 +582,7 @@ void output_state(struct network * network, struct neuron_state * state, struct 
 
 }
 
+// self-explanatory
 void write_to_file(FILE * fp, char * line)
 {
   fwrite(line, sizeof(char), strlen(line), fp);
