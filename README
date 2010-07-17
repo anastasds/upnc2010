@@ -1,8 +1,15 @@
 ======================
 USAGE
 ======================
+To compile:
 	user$>make
-	user$>./proj1 [config_file] [output_filename]
+
+To run:
+	user$>./threaded [config_file] [output_filename]
+	  OR
+	user$>./unthreaded [config_file] [output_filename]
+
+The executable "threaded" and "unthreaded" differ exactly how their names imply; "threaded" is a threaded version of "unthreaded."
 
 If config_file is not specified, template.txt is used. If output_filename is given, the state of the network at the end of all calculations is output to output_filename as a "defined" type network.
 
