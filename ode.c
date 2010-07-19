@@ -16,7 +16,7 @@ void * ode_update_neurons_threaded(void * thread_params)
 void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f)
 {
   double C_m, I_e, i_m, Mg_conc, Ca_resting_conc_soma, Ca_resting_conc_spine, f_pre, tau_Ca, i_Ca_soma, i_Ca_spine;
-  double g_bar_Na, g_bar_K, g_bar_A, g_bar_KCa, g_bar_L, g_bar_NMDA_Ca, g_bar_NMDA_syn, g_bar_AMPA;
+  double g_bar_Na, g_bar_K, g_bar_A, g_bar_KCa, g_bar_CaT, g_bar_L, g_bar_NMDA_Ca, g_bar_NMDA_syn, g_bar_AMPA;
   double E_Na, E_K, E_A, E_L, E_NMDA_Ca, E_NMDA_syn, E_AMPA_syn;
   double m_NMDA_Ca, m_NMDA_syn, s_NMDA, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow;
   double s_AMPA, s_AMPA_rise, s_AMPA_fast, s_AMPA_slow;
@@ -25,7 +25,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   double Phi_Ca, beta_soma, beta_spine, beta_buff, Ca_diffusion_rate, eta_buff;
 
   double alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h;
-  double tau_n, tau_m, tau_h, tau_a, tau_b, tau_c, n_inf, m_inf, h_inf, a_inf, b_inf, c_inf;
+  double tau_n, tau_m, tau_h, tau_a, tau_b, tau_c, tau_M, tau_H, n_inf, m_inf, h_inf, a_inf, b_inf, c_inf, M_inf, H_inf;
   long i, j, offset, num_state_params, limit = start + num;
   struct neuron_params * network_params;
 
@@ -39,36 +39,37 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   g_bar_K = network_params->values[2];
   g_bar_A = network_params->values[3];
   g_bar_KCa = network_params->values[4];
-  g_bar_L = network_params->values[5];
-  g_bar_NMDA_Ca = network_params->values[6];
-  g_bar_NMDA_syn = network_params->values[7];
-  g_bar_AMPA = network_params->values[8];
-  E_Na = network_params->values[9];
-  E_K = network_params->values[10];
-  E_A = network_params->values[11];
-  E_L = network_params->values[12];
-  E_NMDA_Ca = network_params->values[13];
-  E_NMDA_syn = network_params->values[14];
-  E_AMPA_syn = network_params->values[15];
-  Phi_NMDA = network_params->values[16];
-  tau_NMDA_rise = network_params->values[17];
-  tau_NMDA_fast = network_params->values[18];
-  tau_NMDA_slow = network_params->values[19];
-  Phi_AMPA = network_params->values[20];
-  tau_AMPA_rise = network_params->values[21];
-  tau_AMPA_fast = network_params->values[22];
-  tau_AMPA_slow = network_params->values[23];
-  tau_Ca = network_params->values[24];
-  Mg_conc = network_params->values[25];
-  Ca_resting_conc_soma = network_params->values[26];
-  Ca_resting_conc_spine = network_params->values[27];
-  Phi_Ca = network_params->values[28];
-  beta_soma = network_params->values[29];
-  beta_spine = network_params->values[30];
-  eta_buff = network_params->values[31];
-  beta_buff = network_params->values[32];
-  Ca_diffusion_rate = network_params->values[33];
-  I_e = network_params->values[34];
+  g_bar_CaT = network_params->values[5];
+  g_bar_L = network_params->values[6];
+  g_bar_NMDA_Ca = network_params->values[7];
+  g_bar_NMDA_syn = network_params->values[8];
+  g_bar_AMPA = network_params->values[9];
+  E_Na = network_params->values[10];
+  E_K = network_params->values[11];
+  E_A = network_params->values[12];
+  E_L = network_params->values[13];
+  E_NMDA_Ca = network_params->values[14];
+  E_NMDA_syn = network_params->values[15];
+  E_AMPA_syn = network_params->values[16];
+  Phi_NMDA = network_params->values[17];
+  tau_NMDA_rise = network_params->values[18];
+  tau_NMDA_fast = network_params->values[19];
+  tau_NMDA_slow = network_params->values[20];
+  Phi_AMPA = network_params->values[21];
+  tau_AMPA_rise = network_params->values[22];
+  tau_AMPA_fast = network_params->values[23];
+  tau_AMPA_slow = network_params->values[24];
+  tau_Ca = network_params->values[25];
+  Mg_conc = network_params->values[26];
+  Ca_resting_conc_soma = network_params->values[27];
+  Ca_resting_conc_spine = network_params->values[28];
+  Phi_Ca = network_params->values[29];
+  beta_soma = network_params->values[30];
+  beta_spine = network_params->values[31];
+  eta_buff = network_params->values[32];
+  beta_buff = network_params->values[33];
+  Ca_diffusion_rate = network_params->values[34];
+  I_e = network_params->values[35];
 
   num_state_params = network->neurons[start]->state->num_params;
 
@@ -105,23 +106,38 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       h_inf = tau_h * alpha_h;
 
       // calcium-dependent potassium current, from Dayan & Abbott
-      c_inf = y[offset + 7] / (y[offset + 7] + 3.0) * (1.0 / (1.0 + exp((y[offset] + 28.3) / -12.6)));
+      c_inf = y[offset + 9] / (y[offset + 9] + 3.0) * (1.0 / (1.0 + exp((y[offset] + 28.3) / -12.6)));
       tau_c = 90.3 - 75.1 / (1.0 + exp((y[offset] + 46.0) / -22.7));
 
       // NMDAR, from Rubin et al. 2005
       m_NMDA_Ca =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.124 * y[offset]));
       m_NMDA_syn =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.062 * y[offset]));
 
-      s_NMDA_rise = y[offset + 6];
-      s_NMDA_fast = y[offset + 7];
-      s_NMDA_slow = y[offset + 8];
+      s_NMDA_rise = y[offset + 11];
+      s_NMDA_fast = y[offset + 12];
+      s_NMDA_slow = y[offset + 13];
       s_NMDA = s_NMDA_rise + s_NMDA_fast + s_NMDA_slow;
 
       // AMPAR, from Rubin et al. 2005
-      s_AMPA_rise = y[offset + 9];
-      s_AMPA_fast = y[offset + 10];
-      s_AMPA_slow = y[offset + 11];
+      s_AMPA_rise = y[offset + 14];
+      s_AMPA_fast = y[offset + 15];
+      s_AMPA_slow = y[offset + 16];
       s_AMPA = s_AMPA_rise + s_AMPA_fast + s_AMPA_slow;
+
+      // transient calcium current as mentioned in Porazi et al. 2003 supplement but as defined in Dayan & Abbot
+      M_inf = 1.0 / (1.0 + exp((y[offset] + 57.0) / -6.2));
+      tau_M = 0.612 + 1.0 / (exp((y[offset] + 132.0) / -16.7) + exp((y[offset] + 16.8) / 18.2));
+      
+      H_inf = 1.0 / (1.0 + exp((y[offset] + 81.0) / 4.0));
+      if(y[offset] < -80.0)
+	tau_H = exp((y[offset] + 467.0) / 66.6);
+      else
+	tau_H = 28.0 + exp((y[offset] + 22) / -10.5);
+      
+
+      // i_Ca here is i_CaL from Poirazi et al. 2003
+      i_Ca_soma = g_bar_CaT * pow(y[offset + 7], 2.0) * y[offset + 8] * (y[offset] - E_NMDA_Ca);
+      i_Ca_spine = i_Ca_soma;
 
       // membrane current
       i_m = g_bar_L * (y[offset] - E_L)
@@ -129,15 +145,13 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  + g_bar_A * pow(y[offset + 4],3) * y[offset + 5] * (y[offset] - E_A)
 	  + g_bar_Na * pow(y[offset + 2],3) * y[offset + 3] * (y[offset] - E_Na)
 	  + g_bar_KCa * pow(y[offset + 6],4) * (y[offset] - E_K)
+	  + i_Ca_soma
 	  + g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_NMDA_Ca)
 	  + g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn)
 	  + g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn);
       
-      f_pre = 2.0;
-
-      // i_Ca here is i_CaL from Poirazi et al. 2003
-      i_Ca_soma = 0.0;
-      i_Ca_spine = 0.0;
+      // term for presynaptic input, 0 for now
+      f_pre = 0.0;
 
       // update derivatives
       f[offset] = I_e + -1.0*i_m/C_m;
@@ -147,14 +161,16 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       f[offset + 4] = (a_inf - y[offset + 4])/(tau_a);
       f[offset + 5] = (b_inf - y[offset + 5])/(tau_b);
       f[offset + 6] = (c_inf - y[offset + 6])/(tau_c);
-      f[offset + 7] = Phi_Ca * i_Ca_soma - beta_soma * (y[offset + 7] - Ca_resting_conc_soma) + (y[offset + 8] - y[offset + 7]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 7], 2.0);
-      f[offset + 8] = Phi_Ca * (i_Ca_spine + i_Ca_soma) - beta_spine * (y[offset + 8] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 8],2.0) - beta_buff * y[offset + 8];
-      f[offset + 9] = -1.0 * Phi_NMDA * (1.0 - s_NMDA_fast - s_NMDA_slow) * f_pre - s_NMDA_rise / tau_NMDA_rise;
-      f[offset + 10] = Phi_NMDA * (0.527 - s_NMDA_fast) * f_pre - s_NMDA_fast / tau_NMDA_fast;
-      f[offset + 11] = Phi_NMDA * (0.472 - s_NMDA_slow) * f_pre - s_NMDA_slow / tau_NMDA_slow;
-      f[offset + 12] = -1.0 * Phi_AMPA * (1.0 - s_AMPA_fast - s_AMPA_slow) * f_pre - s_AMPA_rise / tau_AMPA_rise;
-      f[offset + 13] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
-      f[offset + 14] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
+      f[offset + 7] = (M_inf - y[offset + 7])/(tau_M);
+      f[offset + 8] = (H_inf - y[offset + 8])/(tau_H);
+      f[offset + 9] = Phi_Ca * i_Ca_soma - beta_soma * (y[offset + 9] - Ca_resting_conc_soma) + (y[offset + 10] - y[offset + 9]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 9], 2.0);
+      f[offset + 10] = Phi_Ca * (i_Ca_spine + i_Ca_soma) - beta_spine * (y[offset + 10] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 10],2.0) - beta_buff * y[offset + 10];
+      f[offset + 11] = -1.0 * Phi_NMDA * (1.0 - s_NMDA_fast - s_NMDA_slow) * f_pre - s_NMDA_rise / tau_NMDA_rise;
+      f[offset + 12] = Phi_NMDA * (0.527 - s_NMDA_fast) * f_pre - s_NMDA_fast / tau_NMDA_fast;
+      f[offset + 13] = Phi_NMDA * (0.472 - s_NMDA_slow) * f_pre - s_NMDA_slow / tau_NMDA_slow;
+      f[offset + 14] = -1.0 * Phi_AMPA * (1.0 - s_AMPA_fast - s_AMPA_slow) * f_pre - s_AMPA_rise / tau_AMPA_rise;
+      f[offset + 15] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
+      f[offset + 16] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
     }
 }
 
