@@ -2,17 +2,19 @@
 2
 
 @PARAMS
-23
+25
 C_m 1.0
 g-bar_Na 120.0
-g-bar_K 36.0
+g-bar_K 20.0
+g-bar_A 47.7
 g-bar_L 0.3
 g-bar_NMDA_Ca 25.0
 g-bar_NMDA_syn 0.3
 g-bar_AMPA 0.05
-E_Na 50.0
-E_K -77.0
-E_L -54.402
+E_Na 55.0
+E_K -72.0
+E_A -75.0
+E_L -17.0
 E_NMDA_Ca 140.0
 E_NMDA_syn 0.0
 E_AMPA_syn 0.0
@@ -25,14 +27,16 @@ tau_AMPA_rise 0.58
 tau_AMPA_fast 7.6
 tau_AMPA_slow 25.69
 Mg_conc 2.0
-I_e 60.0
+I_e 30.0
 
 @DEFAULT_STATE
-10
+12
 V -65.0
 n 0.3177
 m 0.0529
 h 0.5981
+a 0.5557
+b 0.2280
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
 s_NMDA_slow 0.0
