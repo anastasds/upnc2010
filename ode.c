@@ -8,14 +8,14 @@
 void * ode_update_neurons_threaded(void * thread_params)
 {
     struct thread_params * params = (struct thread_params *)thread_params;
-    ode_update_neurons(params->network, params->start, params->num, params->y, params->f);
+    ode_update_neurons(params->network, params->start, params->num, params->y, params->f, params->t);
     pthread_exit(NULL);
 }
 #endif
 
-void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f)
+void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f, double t)
 {
-  double C_m, I_e, i_m, Mg_conc, Ca_resting_conc_soma, Ca_resting_conc_spine, f_pre, tau_Ca, i_Ca_soma, i_Ca_spine;
+  double C_m, I_e, i_m, Mg_conc, Ca_resting_conc_soma, Ca_resting_conc_spine, f_pre, tau_Ca, i_Ca_soma, i_Ca_spine, i_Ca_NMDA;
   double g_bar_Na, g_bar_K, g_bar_A, g_bar_KCa, g_bar_CaT, g_bar_L, g_bar_NMDA_Ca, g_bar_NMDA_syn, g_bar_AMPA;
   double E_Na, E_K, E_A, E_L, E_NMDA_Ca, E_NMDA_syn, E_AMPA_syn;
   double m_NMDA_Ca, m_NMDA_syn, s_NMDA, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow;
@@ -23,6 +23,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   double Phi_NMDA, tau_NMDA_rise, tau_NMDA_fast, tau_NMDA_slow;
   double Phi_AMPA, tau_AMPA_rise, tau_AMPA_fast, tau_AMPA_slow;
   double Phi_Ca, beta_soma, beta_spine, beta_buff, Ca_diffusion_rate, eta_buff;
+  double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in;
 
   double alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h;
   double tau_n, tau_m, tau_h, tau_a, tau_b, tau_c, tau_M, tau_H, n_inf, m_inf, h_inf, a_inf, b_inf, c_inf, M_inf, H_inf;
@@ -132,29 +133,43 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       if(y[offset] < -80.0)
 	tau_H = exp((y[offset] + 467.0) / 66.6);
       else
-	tau_H = 28.0 + exp((y[offset] + 22) / -10.5);
+	tau_H = 28.0 + exp((y[offset] + 22.0) / -10.5);
       
+      
+      // various currents
+      i_L = -1.0*(g_bar_L * (y[offset] - E_L));
+      i_Kdr = -1.0*(g_bar_K * pow(y[offset + 1],4.0) * (y[offset] - E_K));
+      i_A = -1.0*(g_bar_A * pow(y[offset + 4],3.0) * y[offset + 5] * (y[offset] - E_A));
+      i_Na = -1.0*(g_bar_Na * pow(y[offset + 2],3.0) * y[offset + 3] * (y[offset] - E_Na));
+      i_KCa = -1.0*(g_bar_KCa * pow(y[offset + 6],4.0) * (y[offset] - E_K));
+      i_CaT = -1.0*(g_bar_CaT * pow(y[offset + 7], 2.0) * y[offset + 8] * (y[offset] - E_NMDA_Ca));
+      i_NMDA = -1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
+      i_AMPA = -1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+      i_in = i_NMDA + i_AMPA;
 
-      // i_Ca here is i_CaL from Poirazi et al. 2003
-      i_Ca_soma = g_bar_CaT * pow(y[offset + 7], 2.0) * y[offset + 8] * (y[offset] - E_NMDA_Ca);
-      i_Ca_spine = i_Ca_soma;
+      // i_Ca
+      i_Ca_soma = i_CaT;
+      i_Ca_spine = i_CaT;
+      i_Ca_NMDA = g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_NMDA_Ca);
 
       // membrane current
+      i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in;
+
+      /*
       i_m = g_bar_L * (y[offset] - E_L)
 	  + g_bar_K * pow(y[offset + 1],4.0) * (y[offset] - E_K)
-	  + g_bar_A * pow(y[offset + 4],3) * y[offset + 5] * (y[offset] - E_A)
-	  + g_bar_Na * pow(y[offset + 2],3) * y[offset + 3] * (y[offset] - E_Na)
-	  + g_bar_KCa * pow(y[offset + 6],4) * (y[offset] - E_K)
-	  + i_Ca_soma
-	  + g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_NMDA_Ca)
+	  + g_bar_A * pow(y[offset + 4],3.0) * y[offset + 5] * (y[offset] - E_A)
+	  + g_bar_Na * pow(y[offset + 2],3.0) * y[offset + 3] * (y[offset] - E_Na)
+	  + g_bar_KCa * pow(y[offset + 6],4.0) * (y[offset] - E_K)
 	  + g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn)
 	  + g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn);
-      
+      */
+
       // term for presynaptic input, 0 for now
       f_pre = 0.0;
 
       // update derivatives
-      f[offset] = I_e + -1.0*i_m/C_m;
+      f[offset] = I_e + i_m/C_m;
       f[offset + 1] = (n_inf - y[offset + 1])/(tau_n);
       f[offset + 2] = (m_inf - y[offset + 2])/(tau_m);
       f[offset + 3] = (h_inf - y[offset + 3])/(tau_h);
@@ -164,7 +179,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       f[offset + 7] = (M_inf - y[offset + 7])/(tau_M);
       f[offset + 8] = (H_inf - y[offset + 8])/(tau_H);
       f[offset + 9] = Phi_Ca * i_Ca_soma - beta_soma * (y[offset + 9] - Ca_resting_conc_soma) + (y[offset + 10] - y[offset + 9]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 9], 2.0);
-      f[offset + 10] = Phi_Ca * (i_Ca_spine + i_Ca_soma) - beta_spine * (y[offset + 10] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 10],2.0) - beta_buff * y[offset + 10];
+      f[offset + 10] = Phi_Ca * (i_Ca_spine + i_Ca_NMDA) - beta_spine * (y[offset + 10] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 10],2.0) - beta_buff * y[offset + 10];
       f[offset + 11] = -1.0 * Phi_NMDA * (1.0 - s_NMDA_fast - s_NMDA_slow) * f_pre - s_NMDA_rise / tau_NMDA_rise;
       f[offset + 12] = Phi_NMDA * (0.527 - s_NMDA_fast) * f_pre - s_NMDA_fast / tau_NMDA_fast;
       f[offset + 13] = Phi_NMDA * (0.472 - s_NMDA_slow) * f_pre - s_NMDA_slow / tau_NMDA_slow;
@@ -204,7 +219,7 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      printf("%f %f\n",t,y[0]);
+      printf("%f %f %f %f\n",t,y[0],y[9],y[10]);
     }
   
   gsl_odeiv_evolve_free(e);
@@ -223,7 +238,7 @@ int hh_ode(double t, const double y[], double f[], void *params)
       exit(-1);
     }
 
-  ode_update_neurons(network, 0, network->size, y, f);
+  ode_update_neurons(network, 0, network->size, y, f, t);
   return GSL_SUCCESS;
 }
 

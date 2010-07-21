@@ -4,12 +4,12 @@
 @PARAMS
 36
 C_m 1.0
-g-bar_Na 120.0
-g-bar_K 20.0
-g-bar_A 47.7
-g-bar_KCa 1.3
-g-bar_CaT 1.3
-g-bar_L 0.3
+g-bar_Na 30.0
+g-bar_K 14.0
+g-bar_A 7.5
+g-bar_KCa 25.0
+g-bar_CaT 7.0
+g-bar_L 0.1
 g-bar_NMDA_Ca 25.0
 g-bar_NMDA_syn 0.3
 g-bar_AMPA 0.05
@@ -38,19 +38,19 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 30.0
+I_e 4.75
 
 @DEFAULT_STATE
 17
-V -65.0
+V -68.0
 n 0.3177
 m 0.0529
 h 0.5981
 a 0.5557
 b 0.2280
-c 0.0
-M 0.0
-H 0.0
+c 0.0006
+M 0.1450
+H 0.0086
 Ca_conc_soma 0.05
 Ca_conc_spine 0.07
 s_NMDA_rise 0.0
