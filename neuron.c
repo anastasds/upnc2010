@@ -15,7 +15,7 @@ struct network * create_network(char * filename)
   fclose(fp);
 
   if(DEBUG > 0)
-    printf("* network->size set to %ld\n",network->size);
+    printf("* network->size set to %ld, %ld compartments each\n",network->size, network->compartments);
 
   network->neurons = malloc(network->size*sizeof(struct neuron *));
   for(i = 0; i < network->size; i++)
@@ -29,6 +29,13 @@ struct network * create_network(char * filename)
 void create_neuron_compartments(struct neuron * neuron, long n)
 {
   long i;
+
+  if(n < 1)
+    {
+      printf("Error: number of compartments per neuron was %ld, must be poitive\n",n);
+      exit(-1);
+    }
+
   neuron->compartments = (struct neuron_compartment **)malloc(n * sizeof(struct neuron_compartment *));
   for(i = 0; i < n; i++)
     {
@@ -45,7 +52,6 @@ struct neuron * create_neuron()
 {
   struct neuron * new_neuron = malloc(sizeof(struct neuron));
   new_neuron->num_links = 0;
-  //new_neuron->state = NULL;
   new_neuron->params = NULL;
   new_neuron->links = NULL;
   return new_neuron;
@@ -621,4 +627,22 @@ void output_state(struct network * network, struct compartment_state * state, st
 void write_to_file(FILE * fp, char * line)
 {
   fwrite(line, sizeof(char), strlen(line), fp);
+}
+
+// self-explanatory
+void print_network(struct network * network)
+{
+  long i,j,k;
+  for(i = 0; i < network->size; i++)
+    {
+      printf("\n=================\n\n* * NEURON %ld\n", i);
+      for(j = 0; j < network->compartments; j++)
+	{
+	  printf("\n* COMPARTMENT %ld\n", j);
+	  for(k = 0; k < network->neurons[i]->compartments[j]->state->num_params; k++)
+	    {
+	      printf("* %s = %f\n",network->neurons[i]->compartments[j]->state->names[k], network->neurons[i]->compartments[j]->state->values[k]);
+	    }
+	}
+    }
 }

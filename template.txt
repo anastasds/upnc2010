@@ -1,5 +1,5 @@
 @NETWORK_SIZE
-2 2
+2 1
 
 @PARAMS
 36
@@ -61,7 +61,6 @@ s_AMPA_fast 0.0
 s_AMPA_slow 0.0
 
 @INIT_STATES
-
 
 @LINKS
 defined

@@ -85,5 +85,6 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
 void output_state(struct network * network, struct compartment_state * state, struct neuron_params * params, char * filename);
 void write_to_file(FILE * fp, char * line);
 void init_nondefault_states(struct network * network, char * filename);
+void print_network(struct network * network);
 
 #endif

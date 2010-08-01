@@ -76,11 +76,11 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 
   for(i = start; i < limit; i++)
     {
-      offset = num_state_params * i;
+      offset = num_state_params * network->compartments * i;
 
       // update params in neuron_state
-      for(j = 0; j < network->neurons[i]->compartments[1]->state->num_params; j++)
-	network->neurons[i]->compartments[1]->state->values[j] = y[num_state_params*i + j];
+      for(j = 0; j < network->neurons[i]->compartments[0]->state->num_params; j++)
+	network->neurons[i]->compartments[0]->state->values[j] = y[offset + j];
 
       // potassium, from Dayan & Abbott
       alpha_n = 0.02*(y[offset] + 45.7)/(1.0 - exp(-0.1*(y[offset]+45.7)));
@@ -205,8 +205,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
 {
   const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
-  long i, j, num_state_params = network->neurons[0]->compartments[0]->state->num_params;;
-  long dimension = network->size * num_state_params;
+  long i, j, k, num_state_params = network->neurons[0]->compartments[0]->state->num_params;;
+  long dimension = network->size * network->compartments * num_state_params;
   int status;
 
   gsl_odeiv_step * s = gsl_odeiv_step_alloc(T, dimension);
@@ -222,10 +222,11 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
   // set up ode system, four odes per neuron
   // 0 = V, 1 = n, 2 = m, 3 = h
-  double y[num_state_params * network->size];
+    double y[num_state_params * network->size * network->compartments];
   for(i = 0; i < network->size; i++)
-      for(j = 0; j < network->neurons[i]->compartments[1]->state->num_params; j++)
-	y[num_state_params*i + j] = network->neurons[i]->compartments[1]->state->values[j];
+    for(j = 0; j < network->compartments; j++)
+      for(k = 0; k < num_state_params; k++)
+	y[num_state_params * network->compartments * i + num_state_params * j + k] = network->neurons[i]->compartments[j]->state->values[k];
 
   while (t < t1)
     {
