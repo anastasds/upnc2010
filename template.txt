@@ -1,15 +1,15 @@
 @NETWORK_SIZE
-2
+2 2
 
 @PARAMS
 36
 C_m 1.0
-g-bar_Na 30.0
-g-bar_K 14.0
-g-bar_A 7.5
+g-bar_Na 120.0
+g-bar_K 20.0
+g-bar_A 47.7
 g-bar_KCa 25.0
-g-bar_CaT 7.0
-g-bar_L 0.1
+g-bar_CaT 1.3
+g-bar_L 0.3
 g-bar_NMDA_Ca 25.0
 g-bar_NMDA_syn 0.3
 g-bar_AMPA 0.05
@@ -17,7 +17,7 @@ E_Na 55.0
 E_K -72.0
 E_A -75.0
 E_L -17.0
-E_NMDA_Ca 130.0
+E_NMDA_Ca 120.0
 E_NMDA_syn 0.0
 E_AMPA_syn 0.0
 Phi_NMDA 20.0
@@ -30,7 +30,7 @@ tau_AMPA_fast 7.6
 tau_AMPA_slow 25.69
 tau_Ca 200.0
 Mg_conc 2.0
-Ca_resting_conc_soma 0.05
+Ca_resting_conc_soma 0.06
 Ca_resting_conc_spine 0.07
 Phi_Ca 0.01
 beta_soma 0.083
@@ -38,20 +38,20 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 4.75
+I_e 10.0
 
 @DEFAULT_STATE
 17
 V -68.0
-n 0.3177
-m 0.0529
-h 0.5981
-a 0.5557
-b 0.2280
-c 0.0006
-M 0.1450
-H 0.0086
-Ca_conc_soma 0.05
+n 0.3121
+m 0.0450
+h 0.8282
+a 0.6031
+b 0.0898
+c 0.0052
+M 0.5378
+H 0.0020
+Ca_conc_soma 0.06
 Ca_conc_spine 0.07
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
@@ -65,4 +65,5 @@ s_AMPA_slow 0.0
 
 @LINKS
 defined
-0 1 0.5 0.5
+0 1 1 0 0.5 0.5
+1 1 0 1 0.5 0.5

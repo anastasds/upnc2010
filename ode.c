@@ -72,15 +72,15 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   Ca_diffusion_rate = network_params->values[34];
   I_e = network_params->values[35];
 
-  num_state_params = network->neurons[start]->state->num_params;
+  num_state_params = network->neurons[start]->compartments[0]->state->num_params;
 
   for(i = start; i < limit; i++)
     {
       offset = num_state_params * i;
 
       // update params in neuron_state
-      for(j = 0; j < network->neurons[i]->state->num_params; j++)
-	network->neurons[i]->state->values[j] = y[num_state_params*i + j];
+      for(j = 0; j < network->neurons[i]->compartments[1]->state->num_params; j++)
+	network->neurons[i]->compartments[1]->state->values[j] = y[num_state_params*i + j];
 
       // potassium, from Dayan & Abbott
       alpha_n = 0.02*(y[offset] + 45.7)/(1.0 - exp(-0.1*(y[offset]+45.7)));
@@ -145,6 +145,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       i_CaT = -1.0*(g_bar_CaT * pow(y[offset + 7], 2.0) * y[offset + 8] * (y[offset] - E_NMDA_Ca));
       i_NMDA = -1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
       i_AMPA = -1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+
+      // presynaptic input
       i_in = i_NMDA + i_AMPA;
 
       // i_Ca
@@ -155,6 +157,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       // membrane current
       i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in;
 
+      i_m = i_L + i_Na + i_Kdr + i_A + i_CaT + i_KCa;
+            
       /*
       i_m = g_bar_L * (y[offset] - E_L)
 	  + g_bar_K * pow(y[offset + 1],4.0) * (y[offset] - E_K)
@@ -165,7 +169,6 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  + g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn);
       */
 
-      // term for presynaptic input, 0 for now
       f_pre = 0.0;
 
       // update derivatives
@@ -186,13 +189,23 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       f[offset + 14] = -1.0 * Phi_AMPA * (1.0 - s_AMPA_fast - s_AMPA_slow) * f_pre - s_AMPA_rise / tau_AMPA_rise;
       f[offset + 15] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
       f[offset + 16] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
+
+      // now that everything for this neuron has been updated, 
+      // let's update all neurons on which this neuron synapses
+      /*
+      for(j = 0; j < network->neurons[i]->num_links; j++)
+	{
+	  next = network->neurons[i]->links[j]->to;
+	  network->neurons[next]->
+	}
+      */
     }
 }
 
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
 {
   const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
-  long i, j, num_state_params = network->neurons[0]->state->num_params;;
+  long i, j, num_state_params = network->neurons[0]->compartments[0]->state->num_params;;
   long dimension = network->size * num_state_params;
   int status;
 
@@ -211,15 +224,22 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
   // 0 = V, 1 = n, 2 = m, 3 = h
   double y[num_state_params * network->size];
   for(i = 0; i < network->size; i++)
-      for(j = 0; j < network->neurons[i]->state->num_params; j++)
-	y[num_state_params*i + j] = network->neurons[i]->state->values[j];
+      for(j = 0; j < network->neurons[i]->compartments[1]->state->num_params; j++)
+	y[num_state_params*i + j] = network->neurons[i]->compartments[1]->state->values[j];
 
   while (t < t1)
     {
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      printf("%f %f %f %f\n",t,y[0],y[9],y[10]);
+      printf("%f ", t);
+      /*
+      for(j = 0; j < network->size; j++)
+	printf("%f ", y[num_state_params*j]);
+      */
+      for(j = 0; j < num_state_params; j++)
+	printf("%f ",y[j]);
+      printf("\n");
     }
   
   gsl_odeiv_evolve_free(e);

@@ -18,21 +18,21 @@ CONFIG FILE
 ======================
 
 @NETWORK_SIZE
-[long number of neurons in network]
+[long number_of_neurons_in_network] [long number_of_compartments_per_neuron]
 
 @PARAMS
-[int number of params]
-[char * param name] [float param value]
+[int number_of_global_params]
+[char* param_name] [float param_value]
 ...
 
 @DEFAULT_STATE
-[int number of params]
-[char * param name] [ float param value]
+[int number_of_params_for_each_compartment]
+[char * param_name] [ float param_value]
 ...
 
 @INIT_STATE
-[int number of neurons with differing initial states]
-[int neuron id] [list of parameter values in same order as in @DEFAULT_STATE]
+[long number_of_neurons_with_differing_initial_states]
+[long neuron_id] [long compartment_number_of_neuron] [float* list_of_parameter_values_in_same_order_as_in_@DEFAULT_STATE]
 ...
 
 @LINKS
@@ -43,6 +43,6 @@ CONFIG FILE
 	if random:
 	   [float probability two neurons are connected] [0|1 random weights?] [default weight] [0|1 random ctimes?] [default ctime]
 	if defined:
-	   [int from_id] [int to_id] [float weight] [conductance_time]
+	   [long from_neuron_number] [long from_neuron_compartment_number] [long to_neuron_number] [long to_neuon_compartment_number] [float weight] [conductance_time]
 	   ...
 ]
