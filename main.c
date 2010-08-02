@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
   ode_run(network, 0, 50.0, 1.0e-6, 1.0e-6);
 
-  print_network(network);
+  //print_network(network);
 
   if(argc > 2) output_state(network, init_compartment_state, params, argv[2]);
   else if(argc < 2) free(input_filename);
