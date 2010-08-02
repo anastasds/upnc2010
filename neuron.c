@@ -91,13 +91,15 @@ struct neuron_params * init_neuron_params(char * filename)
 // malloc()s a neuron_state with state variables set to values
 // defined to be default in @DEFAULT_STATE section of config file;
 // returns pointer to neuron_state()
-struct compartment_state * init_init_compartment_state(char * filename)
+struct compartment_state * init_init_compartment_state(long num_compartment, char * filename)
 {
   int i = 0;
   struct compartment_state * state = malloc(sizeof(struct compartment_state));
-  FILE * fp = open_file_to_section(filename, "@DEFAULT_STATE");
+  FILE * fp;
   char line[MAX_LINE_LEN];
 
+  sprintf(line, "@DEFAULT_STATE %ld", num_compartment);
+  fp = open_file_to_section(filename, line);
   fscanf(fp, "%d",&(state->num_params));
   if(DEBUG > 0)
     printf("* init_compartment_state->num_params set to %d\n", state->num_params);
@@ -119,14 +121,27 @@ struct compartment_state * init_init_compartment_state(char * filename)
   return state;
 }
 
+struct init_compartment_states * init_init_compartment_states(struct network * network, char * filename)
+{
+  long i;
+  struct init_compartment_states * new_states = (struct init_compartment_states *)malloc(sizeof(struct init_compartment_states));
+
+  new_states->num_states = network->compartments;
+  new_states->states = (struct compartment_state **)malloc(network->compartments * sizeof(struct compartment_state));
+  for(i = 0; i < network->compartments; i++)
+    new_states->states[i] = init_init_compartment_state(i, filename);
+
+  return new_states;
+}
+
 // copies default neuron states as defined in init_init_neuron_state()
 // to each neurons in the network
-void init_network_states(struct network * network, struct compartment_state * init_compartment_state)
+void init_network_states(struct network * network, struct init_compartment_states * init_compartment_states)
 {
   long i, j;
   for(i = 0; i < network->size; i++)
     for(j = 0; j < network->compartments; j++)
-      network->neurons[i]->compartments[j]->state = copy_compartment_state(init_compartment_state);
+      network->neurons[i]->compartments[j]->state = copy_compartment_state(init_compartment_states->states[j]);
 }
 
 // parses @INIT_STATES to update network neurons to initial state variable values that
@@ -245,14 +260,21 @@ void destroy_network_params(struct neuron_params * params)
 }
 
 // cleanup function
-void destroy_init_compartment_state(struct compartment_state * init_compartment_state)
+void destroy_init_compartment_states(struct init_compartment_states * init_compartment_states)
 {
-  int i;
-  for(i = 0; i < init_compartment_state->num_params; i++)
-    free(init_compartment_state->names[i]);
-  free(init_compartment_state->names);
-  free(init_compartment_state->values);
-  free(init_compartment_state);
+  long i,j;
+  for(i = 0; i < init_compartment_states->num_states; i++)
+    {
+      for(j = 0; j < init_compartment_states->states[i]->num_params; j++)
+	{
+	  free(init_compartment_states->states[i]->names[j]);
+	}
+      free(init_compartment_states->states[i]->names);
+      free(init_compartment_states->states[i]->values);
+      free(init_compartment_states->states[i]);
+    }
+  free(init_compartment_states->states);
+  free(init_compartment_states);
 }
 
 // cleanup function
@@ -284,10 +306,10 @@ void destroy_network(struct network * network)
 }
 
 // cleanup function
-void cleanup(struct network * network, struct compartment_state * init_compartment_state, struct neuron_params * params)
+void cleanup(struct network * network, struct init_compartment_states * init_compartment_states, struct neuron_params * params)
 {
   destroy_network_params(params);
-  destroy_init_compartment_state(init_compartment_state);
+  destroy_init_compartment_states(init_compartment_states);
   destroy_network(network);
 }
 
@@ -556,7 +578,7 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
 
 // takes the current state of the network and outputs it into a file (with filename given) formatted
 // as a config file so that we can analyze the data or use it to progress the simulation later
-void output_state(struct network * network, struct compartment_state * state, struct neuron_params * params, char * filename)
+void output_state(struct network * network, struct init_compartment_states * states, struct neuron_params * params, char * filename)
 {
   FILE * fp;
   long i,j,k;
@@ -581,13 +603,16 @@ void output_state(struct network * network, struct compartment_state * state, st
       write_to_file(fp, line);
     }
 
-  sprintf(line, "\n@DEFAULT_STATE\n%d\n", state->num_params);
-  write_to_file(fp, line);
-
-  for(i = 0; i < state->num_params; i++)
+  for(i = 0; i < states->num_states; i++)
     {
-      sprintf(line,"%s %f\n", state->names[i], state->values[i]);
+      sprintf(line, "\n@DEFAULT_STATE %ld\n%d\n", i, states->states[i]->num_params);
       write_to_file(fp, line);
+
+      for(j = 0; j < states->states[i]->num_params; j++)
+	{
+	  sprintf(line,"%s %f\n", states->states[i]->names[j], states->states[i]->values[j]);
+	  write_to_file(fp, line);
+	}
     }
 
   sprintf(line, "\n@INIT_STATES\n");
@@ -598,7 +623,7 @@ void output_state(struct network * network, struct compartment_state * state, st
       for(k = 0; k < network->compartments; k++)
 	{
 	  sprintf(line, "%ld %ld", i, k);
-	  for(j = 0; j < state->num_params; j++)
+	  for(j = 0; j < states->states[k]->num_params; j++)
 	    {
 	      sprintf(tmp, " %f", network->neurons[i]->compartments[k]->state->values[j]);
 	      strcat(line, tmp);
