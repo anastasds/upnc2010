@@ -4,7 +4,7 @@
 #include "neuron.h"
 #include "currents.h"
 
-double Na_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double Na_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double alpha_m, beta_m, tau_m, m_inf;
   double alpha_h, beta_h, tau_h, h_inf;
@@ -31,7 +31,7 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   return -1.0*(g_bar_Na * pow(y[offset + 11],3.0) * y[offset + 12] * (y[offset] - E_Na));
 }
 
-double Kdr_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double Kdr_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double alpha_n, beta_n, tau_n, n_inf;
   double g_bar_K, E_K;
@@ -51,7 +51,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   return -1.0*(g_bar_K * pow(y[offset + 10],4.0) * (y[offset] - E_K));
 }
 
-double A_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double A_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double a_inf, tau_a, b_inf, tau_b;
   double g_bar_A, E_A;
@@ -73,7 +73,7 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   return -1.0*(g_bar_A * pow(y[offset + 13],3.0) * y[offset + 14] * (y[offset] - E_A));
 }
 
-double KCa_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double KCa_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double c_inf, tau_c;
   double g_bar_KCa, E_K;
@@ -91,7 +91,7 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   return -1.0*(g_bar_KCa * pow(y[offset + 15],4.0) * (y[offset] - E_K));
 }
 
-double CaT_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double CaT_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double M_inf, tau_M, H_inf, tau_H;
   double g_bar_CaT, E_Ca;
@@ -116,7 +116,7 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
   return -1.0*(g_bar_CaT * pow(y[offset + 16], 2.0) * y[offset + 17] * (y[offset] - E_Ca));
 }
 
-double L_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double L_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double g_bar_L, E_L;
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
@@ -128,11 +128,11 @@ double L_current(struct network * network, long num_neuron, long num_compartment
   return -1.0*(g_bar_L * (y[offset] - E_L));
 }
 
-double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow, s_NMDA;
-  double Phi, i_Ca_soma, beta_soma, Ca_resting_conc_soma, Ca_diffusion_rate, eta_buff;
-  double i_CaT, i_Ca_spine, i_Ca_NMDA, beta_spine, Ca_resting_conc_spine, beta_buff;
+  double Phi, beta_soma, Ca_resting_conc_soma, Ca_diffusion_rate, eta_buff;
+  double i_Ca, i_Ca_NMDA, beta_spine, Ca_resting_conc_spine, beta_buff;
   double Mg_conc, g_bar_NMDA_Ca, g_bar_NMDA_syn, E_NMDA_syn, E_Ca;
   double Phi_NMDA, tau_NMDA_rise, tau_NMDA_fast, tau_NMDA_slow, tau_Ca;
   double f_pre;
@@ -172,20 +172,18 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   Ca_diffusion_rate = network->neurons[0]->params->values[25];
 
   // i_Ca
-  i_CaT = CaT_current(network, num_neuron, num_compartment, f, y);
-  i_Ca_soma = CaT_current(network, num_neuron, 1, f, y);
-  i_Ca_spine = CaT_current(network, num_neuron, 0, f, y);
+  i_Ca = CaT_current(network, num_neuron, num_compartment, f, y, t);
   i_Ca_NMDA = -1.0 * (g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_Ca));
 
   // compartment 0 is spine, 1 is soma
   if(num_compartment == 0)
     {
-      f[offset + 18] = Phi * (i_Ca_spine + i_Ca_NMDA) - beta_spine * (y[offset + 18] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 18],2.0) - beta_buff * y[offset + 18];
+      f[offset + 18] = Phi * (i_Ca + i_Ca_NMDA) - beta_spine * (y[offset + 18] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 18],2.0) - beta_buff * y[offset + 18];
     }
   else
     {
       long num_state_params = network->neurons[num_neuron]->compartments[0]->state->num_params;
-      f[offset + 18] = Phi * i_Ca_soma - beta_soma * (y[offset + 18] - Ca_resting_conc_soma) + (y[offset + 18 - num_state_params] - y[offset + 18]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 18], 2.0);
+      f[offset + 18] = Phi * i_Ca - beta_soma * (y[offset + 18] - Ca_resting_conc_soma) + (y[offset + 18 - num_state_params] - y[offset + 18]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 18], 2.0);
     }
 
   f[offset + 19] = -1.0 * Phi_NMDA * (1.0 - s_NMDA_fast - s_NMDA_slow) * f_pre - s_NMDA_rise / tau_NMDA_rise;
@@ -193,10 +191,10 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   f[offset + 20] = Phi_NMDA * (0.527 - s_NMDA_fast) * f_pre - s_NMDA_fast / tau_NMDA_fast;
   f[offset + 21] = Phi_NMDA * (0.473 - s_NMDA_slow) * f_pre - s_NMDA_slow / tau_NMDA_slow;
 
-  return -1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
+  return 1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
 }
 
-double AMPA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y)
+double AMPA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double s_AMPA_rise, s_AMPA_fast, s_AMPA_slow, s_AMPA;
   double Phi_AMPA, tau_AMPA_rise, tau_AMPA_fast, tau_AMPA_slow;
@@ -222,5 +220,5 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   f[offset + 23] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
   f[offset + 24] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
 
-  return -1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+  return 1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
 }

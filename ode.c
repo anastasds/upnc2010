@@ -46,25 +46,23 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  offset = num_state_params * network->compartments * i + num_state_params * j;
 
 	  // figure out individual currents
-	  i_Na = Na_current(network,i,j,f,y);
-	  i_Kdr = Kdr_current(network,i,j,f,y);
-	  i_A = A_current(network,i,j,f,y);
-	  i_KCa = KCa_current(network,i,j,f,y);
-	  i_CaT = CaT_current(network,i,j,f,y);
-	  i_L = L_current(network,i,j,f,y);
+	  i_Na = Na_current(network,i,j,f,y,t);
+	  i_Kdr = Kdr_current(network,i,j,f,y,t);
+	  i_A = A_current(network,i,j,f,y,t);
+	  i_KCa = KCa_current(network,i,j,f,y,t);
+	  i_CaT = CaT_current(network,i,j,f,y,t);
+	  i_L = L_current(network,i,j,f,y,t);
+	  i_NMDA = NMDA_current(network,i,j,f,y,t);
+	  i_AMPA = AMPA_current(network,i,j,f,y,t);
 
 	  // compartment 0 is the spine
 	  if(j == 0)
 	    {
-	      i_NMDA = NMDA_current(network,i,j,f,y);
-	      i_AMPA = AMPA_current(network,i,j,f,y);
 	      i_in = i_NMDA + i_AMPA;
 	      i_coup = 1.125*(y[offset + num_state_params] - y[offset]);
 	    }
 	  else
 	    {
-	      i_NMDA = 0.0;
-	      i_AMPA = 0.0;
 	      i_in = I_e;
 	      i_coup = 1.125*(y[offset] - y[offset - num_state_params]);
 	    }
