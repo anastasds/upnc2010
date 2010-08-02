@@ -640,7 +640,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
     {
       for(j = 0; j < network->neurons[i]->num_links; j++)
 	{
-	  sprintf(line, "%ld %ld %ld %ld %ld %f %f\n", i, network->neurons[i]->links[j]->from, network->neurons[i]->links[j]->from_compartment, network->neurons[i]->links[j]->to, network->neurons[i]->links[j]->to_compartment, network->neurons[i]->links[j]->weight, network->neurons[i]->links[j]->conduction_time);
+	  sprintf(line, "%ld %ld %ld %ld %f %f\n", network->neurons[i]->links[j]->from, network->neurons[i]->links[j]->from_compartment, network->neurons[i]->links[j]->to, network->neurons[i]->links[j]->to_compartment, network->neurons[i]->links[j]->weight, network->neurons[i]->links[j]->conduction_time);
 	  write_to_file(fp, line);
 	}
     }

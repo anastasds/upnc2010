@@ -25,10 +25,10 @@ CONFIG FILE
 [char* param_name] [float param_value]
 ...
 
-@DEFAULT_STATE
+@DEFAULT_STATE [long compartment_number]
 [int number_of_params_for_each_compartment]
 [char * param_name] [ float param_value]
-...
+... (multiple [@DEFAULT_STATE long compartment_number] for multiple compartments' default states)
 
 @INIT_STATE
 [long number_of_neurons_with_differing_initial_states]
