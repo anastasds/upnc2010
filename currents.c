@@ -190,7 +190,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   double s_AMPA_rise, s_AMPA_fast, s_AMPA_slow, s_AMPA;
   double Phi_AMPA, tau_AMPA_rise, tau_AMPA_fast, tau_AMPA_slow;
   double g_bar_AMPA, E_AMPA_syn, f_pre;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]run.sh->state->num_params;
+  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_AMPA = network->neurons[0]->params->values[9];
   E_AMPA_syn = network->neurons[0]->params->values[16];
