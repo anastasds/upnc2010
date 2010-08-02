@@ -38,10 +38,10 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 10.0
+I_e 0.0
 
 @DEFAULT_STATE 0
-17
+16
 V -68.0
 n 0.3121
 m 0.0450
@@ -51,7 +51,6 @@ b 0.0898
 c 0.0052
 M 0.5378
 H 0.0020
-Ca_conc 0.07
 Ca_conc 0.07
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
@@ -61,7 +60,7 @@ s_AMPA_fast 0.0
 s_AMPA_slow 0.0
 
 @DEFAULT_STATE 1
-17
+16
 V -68.0
 n 0.3121
 m 0.0450
@@ -71,7 +70,6 @@ b 0.0898
 c 0.0052
 M 0.5378
 H 0.0020
-Ca_conc 0.05
 Ca_conc 0.05
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0

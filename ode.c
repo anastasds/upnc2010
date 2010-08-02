@@ -60,6 +60,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  	  
 	  // membrane current
 	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in;
+	  i_m = i_L + i_Kdr + i_A + i_CaT + i_Na;
 
 	  // presynaptic activity
 	  f_pre = 0.0;
