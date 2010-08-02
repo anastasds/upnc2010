@@ -16,8 +16,8 @@ void * ode_update_neurons_threaded(void * thread_params)
 
 void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f, double t)
 {
-  double C_m, I_e, f_pre, i_m;
-  double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in;
+  double C_m, I_e, i_m;
+  double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in, i_coup;
   long i, j, k, offset, num_state_params, limit = start + num;
   struct neuron_params * network_params;
 
@@ -27,7 +27,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   // get general network parameters that are the same for each neuron
   network_params = network->neurons[start]->params;
   C_m = network_params->values[0];
-  I_e = network_params->values[35];
+  I_e = network_params->values[26];
 
   num_state_params = network->neurons[start]->compartments[0]->state->num_params;
 
@@ -52,21 +52,32 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  i_KCa = KCa_current(network,i,j,f,y);
 	  i_CaT = CaT_current(network,i,j,f,y);
 	  i_L = L_current(network,i,j,f,y);
-	  i_NMDA = NMDA_current(network,i,j,f,y);
-	  i_AMPA = AMPA_current(network,i,j,f,y);
-	  
-	  // presynaptic input
-	  i_in = i_NMDA + i_AMPA;
+
+	  // compartment 0 is the spine
+	  if(j == 0)
+	    {
+	      i_NMDA = NMDA_current(network,i,j,f,y);
+	      i_AMPA = AMPA_current(network,i,j,f,y);
+	      i_in = i_NMDA + i_AMPA;
+	      i_coup = 1.125*(y[offset + num_state_params] - y[offset]);
+	    }
+	  else
+	    {
+	      i_NMDA = 0.0;
+	      i_AMPA = 0.0;
+	      i_in = I_e;
+	      i_coup = 1.125*(y[offset] - y[offset - num_state_params]);
+	    }
 	  	  
 	  // membrane current
-	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in;
-	  i_m = i_L + i_Kdr + i_A + i_CaT + i_Na;
-
-	  // presynaptic activity
-	  f_pre = 0.0;
+	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
 	  
-	  // update derivatives
-	  f[offset] = I_e + i_m/C_m;
+	  // update derivatives (first state variable is voltage)
+	  f[offset] = i_m/C_m;
+	  
+	  // keep conductances constant
+	  for(k = 1; k < 10; k++)
+	    f[k] = 0.0;
 	}
     }
 }
@@ -110,6 +121,8 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       */
       for(j = 0; j < num_state_params; j++)
 	printf("%f ",y[j]);
+      for(j = 0; j < num_state_params; j++)
+	printf("%f ",y[num_state_params + j]);
       printf("\n");
     }
   
