@@ -1,6 +1,9 @@
 @NETWORK_SIZE
 2 2
 
+@RUNTIME
+0 1000.0
+
 @PARAMS
 27
 C_m 1.0

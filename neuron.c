@@ -30,6 +30,16 @@ struct network * create_network(char * filename)
   return network;
 }
 
+double * get_runtime(char * filename)
+{
+  double * runtime = (double *)malloc(2*sizeof(double));
+  FILE * fp = open_file_to_section(filename,"@RUNTIME");
+
+  fscanf(fp,"%lf %lf", &runtime[0], &runtime[1]);
+  fclose(fp);
+  return runtime;
+}
+
 void create_neuron_compartments(struct neuron * neuron, long n)
 {
   long i;

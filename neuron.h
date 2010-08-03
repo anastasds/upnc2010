@@ -87,6 +87,7 @@ struct stimuli {
 
 struct network * create_network(char * filename);
 void create_neuron_compartments(struct neuron * neuron, long n);
+double * get_runtime(char * filename);
 struct neuron * create_neuron();
 struct neuron_params * init_neuron_params(char * filename);
 struct compartment_state * init_init_compartment_state(long num_compartment, char * filename);

@@ -12,6 +12,7 @@ int main(int argc, char** argv)
   struct network * network = create_network(input_filename);
   struct neuron_params * params = init_neuron_params(input_filename);
   struct init_compartment_states * init_compartment_states = init_init_compartment_states(network, input_filename);
+  double * runtime = get_runtime(input_filename);
 
   init_stimuli(network, input_filename);
   init_network_states(network, init_compartment_states);
@@ -19,7 +20,7 @@ int main(int argc, char** argv)
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
 
-  ode_run(network, 0, 300.0, 1.0e-6, 1.0e-6);
+  ode_run(network, runtime[0], runtime[1], 1.0e-6, 1.0e-6);
 
   //print_network(network);
 

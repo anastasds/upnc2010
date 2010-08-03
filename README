@@ -20,6 +20,9 @@ CONFIG FILE
 @NETWORK_SIZE
 [long number_of_neurons_in_network] [long number_of_compartments_per_neuron]
 
+@RUNTIME
+[double simulation_start_time] [double simulation_start_time]
+
 @PARAMS
 [int number_of_global_params]
 [char* param_name] [float param_value]
