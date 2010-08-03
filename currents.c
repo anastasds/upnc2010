@@ -128,7 +128,7 @@ double L_current(struct network * network, long num_neuron, long num_compartment
   return -1.0*(g_bar_L * (y[offset] - E_L));
 }
 
-double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaT)
 {
   double m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow, s_NMDA;
   double Phi, beta_soma, Ca_resting_conc_soma, Ca_diffusion_rate, eta_buff;
@@ -172,7 +172,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   Ca_diffusion_rate = network->neurons[0]->params->values[25];
 
   // i_Ca
-  i_Ca = CaT_current(network, num_neuron, num_compartment, f, y, t);
+  i_Ca = i_CaT; // i_CaT passed as argument
   i_Ca_NMDA = -1.0 * (g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_Ca));
 
   // compartment 0 is spine, 1 is soma

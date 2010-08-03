@@ -9,7 +9,7 @@
 struct network * create_network(char * filename)
 {
   long i;
-  struct network * network = malloc(sizeof(struct network));
+  struct network * network = (struct network *)malloc(sizeof(struct network));
   FILE * fp = open_file_to_section(filename, "@NETWORK_SIZE");
 
   fscanf(fp, "%ld %ld", &(network->size),&(network->compartments));
@@ -18,7 +18,7 @@ struct network * create_network(char * filename)
   if(DEBUG > 0)
     printf("* network->size set to %ld, %ld compartments each\n",network->size, network->compartments);
 
-  network->neurons = malloc(network->size*sizeof(struct neuron *));
+  network->neurons = (struct neuron **)malloc(network->size*sizeof(struct neuron *));
   network->stimuli = NULL;
 
   for(i = 0; i < network->size; i++)
@@ -65,7 +65,7 @@ void create_neuron_compartments(struct neuron * neuron, long n)
 // returns pointer;
 struct neuron * create_neuron()
 {
-  struct neuron * new_neuron = malloc(sizeof(struct neuron));
+  struct neuron * new_neuron = (struct neuron *)malloc(sizeof(struct neuron));
   new_neuron->num_links = 0;
   new_neuron->params = NULL;
   new_neuron->links = NULL;
@@ -78,24 +78,24 @@ struct neuron * create_neuron()
 struct neuron_params * init_neuron_params(char * filename)
 {
   int i = 0;
-  struct neuron_params * params = malloc(sizeof(struct neuron_params));
+  struct neuron_params * params = (struct neuron_params *)malloc(sizeof(struct neuron_params));
   FILE * fp = open_file_to_section(filename, "@PARAMS");
   char line[MAX_LINE_LEN];
 
   fscanf(fp, "%d",&(params->num_params));
   if(DEBUG > 0)
     printf("* params->num_params set to %d\n", params->num_params);
-  params->names = malloc(params->num_params * sizeof(char *));
-  params->values = malloc(params->num_params * sizeof(float));
+  params->names = (char **)malloc(params->num_params * sizeof(char *));
+  params->values = (double *)malloc(params->num_params * sizeof(double));
   
   for(i = 0; i < params->num_params; i++)
     {
       fscanf(fp, "%s", line);
-      fscanf(fp, "%f", &params->values[i]);
-      params->names[i] = malloc((strlen(line) + 1) * sizeof(char));
+      fscanf(fp, "%lf", &params->values[i]);
+      params->names[i] = (char *)malloc((strlen(line) + 1) * sizeof(char));
       strcpy(params->names[i], line);
       if(DEBUG > 0)
-	  printf("* params->names[%d]: %s = %f\n", i, params->names[i], params->values[i]);
+	  printf("* params->names[%d]: %s = %lf\n", i, params->names[i], params->values[i]);
     }
   fclose(fp);
   if(DEBUG > 0)
@@ -109,7 +109,7 @@ struct neuron_params * init_neuron_params(char * filename)
 struct compartment_state * init_init_compartment_state(long num_compartment, char * filename)
 {
   int i = 0;
-  struct compartment_state * state = malloc(sizeof(struct compartment_state));
+  struct compartment_state * state = (struct compartment_state *)malloc(sizeof(struct compartment_state));
   FILE * fp;
   char line[MAX_LINE_LEN];
 
@@ -118,17 +118,17 @@ struct compartment_state * init_init_compartment_state(long num_compartment, cha
   fscanf(fp, "%d",&(state->num_params));
   if(DEBUG > 0)
     printf("* init_compartment_state->num_params set to %d\n", state->num_params);
-  state->names = malloc(state->num_params * sizeof(char *));
-  state->values = malloc(state->num_params * sizeof(float));
+  state->names = (char **)malloc(state->num_params * sizeof(char *));
+  state->values = (double *)malloc(state->num_params * sizeof(double));
   
   for(i = 0; i < state->num_params; i++)
     {
       fscanf(fp, "%s", line);
-      fscanf(fp, "%f", &state->values[i]);
-      state->names[i] = malloc((strlen(line) + 1) * sizeof(char));
+      fscanf(fp, "%lf", &state->values[i]);
+      state->names[i] = (char *)malloc((strlen(line) + 1) * sizeof(char));
       strcpy(state->names[i], line);
       if(DEBUG > 0)
-	  printf("* state->names[%d]: %s = %f\n", i, state->names[i], state->values[i]);
+	  printf("* state->names[%d]: %s = %lf\n", i, state->names[i], state->values[i]);
     }
   fclose(fp);
   if(DEBUG > 0)
@@ -166,8 +166,8 @@ void init_nondefault_states(struct network * network, char * filename)
   FILE * fp;
   int num_params, num_read;
   long i, n, c;
-  float param;
-  char *tmp, *line = malloc(MAX_LINE_LEN * sizeof(char));;
+  double param;
+  char *tmp, *line = (char *)malloc(MAX_LINE_LEN * sizeof(char));;
   tmp = line;
 
   if(network->size == 0)
@@ -222,7 +222,7 @@ void init_nondefault_states(struct network * network, char * filename)
       line += num_read;
       for(i = 0; i < num_params; i++)
 	{
-	  sscanf(line, "%f%n", &param, &num_read);
+	  sscanf(line, "%lf%n", &param, &num_read);
 	  network->neurons[n]->compartments[c]->state->values[i] = param;
 	  line += num_read;
 	}
@@ -240,14 +240,14 @@ void init_nondefault_states(struct network * network, char * filename)
 struct compartment_state * copy_compartment_state(struct compartment_state * init_compartment_state)
 {
   int i = 0;
-  struct compartment_state * new_state = malloc(sizeof(struct compartment_state));
+  struct compartment_state * new_state = (struct compartment_state *)malloc(sizeof(struct compartment_state));
 
   new_state->num_params = init_compartment_state->num_params;
-  new_state->names = malloc(new_state->num_params * sizeof(char *));
-  new_state->values = malloc(new_state->num_params * sizeof(float));
+  new_state->names = (char **)malloc(new_state->num_params * sizeof(char *));
+  new_state->values = (double *)malloc(new_state->num_params * sizeof(double));
   for(i = 0; i < new_state->num_params; i++)
     {
-      new_state->names[i] = malloc((strlen(init_compartment_state->names[i]) + 1) * sizeof(char));
+      new_state->names[i] = (char *)malloc((strlen(init_compartment_state->names[i]) + 1) * sizeof(char));
       strcpy(new_state->names[i],init_compartment_state->names[i]);
       new_state->values[i] = init_compartment_state->values[i];
     }
@@ -336,7 +336,7 @@ void cleanup(struct network * network, struct init_compartment_states * init_com
 FILE * open_file_to_section(char * filename, char * section)
 {
   FILE * fp;
-  char * line = malloc(MAX_LINE_LEN * sizeof(char));
+  char * line = (char *)malloc(MAX_LINE_LEN * sizeof(char));
 
   if((fp = fopen(filename, "rt")) == NULL)
     {
@@ -383,7 +383,7 @@ void link_neurons(struct network * network, char * filename)
 {
   int random_weights, random_ctimes;
   long i, j, from, from_compartment, to, to_compartment;
-  float weight, ctime, p_connected, r, default_weight, default_ctime;
+  double weight, ctime, p_connected, r, default_weight, default_ctime;
   char line[MAX_LINE_LEN];
 
   if(DEBUG > 0)
@@ -408,14 +408,14 @@ void link_neurons(struct network * network, char * filename)
 	  exit(-1);
 	}
       
-      sscanf(line, "%f %f", &weight, &ctime);
+      sscanf(line, "%lf %lf", &weight, &ctime);
       if(DEBUG > 0)
-	printf("* link weights %f, conductance times %f\n", weight, ctime);
+	printf("* link weights %lf, conductance times %lf\n", weight, ctime);
 
       for(i = 0; i < network->size; i++)
 	{
 	  network->neurons[i]->num_links = network->size - 1;
-	  network->neurons[i]->links = malloc((network->size - 1) * sizeof(struct neuron_link *));
+	  network->neurons[i]->links = (struct neuron_link **)malloc((network->size - 1) * sizeof(struct neuron_link *));
 	  for(j = 0; j < i; j++)
 	    network->neurons[i]->links[j] = create_link(i, network->compartments - 1, j, 0, weight, ctime);
 
@@ -426,9 +426,9 @@ void link_neurons(struct network * network, char * filename)
   else if(strcmp(line,"random") == 0)
     {
       srand(time(NULL));
-      fscanf(fp, "%f %d %f %d %f", &p_connected, &random_weights, &default_weight, &random_ctimes, &default_ctime);
+      fscanf(fp, "%lf %d %lf %d %lf", &p_connected, &random_weights, &default_weight, &random_ctimes, &default_ctime);
 
-      struct link_queue * link_queue = malloc(sizeof(struct link_queue));
+      struct link_queue * link_queue = (struct link_queue *)malloc(sizeof(struct link_queue));
       link_queue->head = NULL;
       link_queue->tail = NULL;
 
@@ -442,14 +442,14 @@ void link_neurons(struct network * network, char * filename)
 	      if(random_weights == 0)
 		weight = default_weight;
 	      else
-		weight = ((float)(rand() % 1000)) / 1000.0;
+		weight = ((double)(rand() % 1000)) / 1000.0;
 
 	      if(random_ctimes == 0)
 		ctime = default_ctime;
 	      else
-		ctime = ((float)(rand() % 1000)) / 1000.0;
+		ctime = ((double)(rand() % 1000)) / 1000.0;
 
-	      r = ((float)(rand() % 1000)) / 1000.0;
+	      r = ((double)(rand() % 1000)) / 1000.0;
 	      if(r < p_connected)
 		{
 		  network->neurons[i]->num_links++;
@@ -473,7 +473,7 @@ void link_neurons(struct network * network, char * filename)
 	}
       fclose(fp);
 
-      int * num_created = malloc(network->size * sizeof(int));
+      int * num_created = (int *)malloc(network->size * sizeof(int));
       memset(num_created, 0, network->size * sizeof(int));
       for(i = 0; i < network->size; i++)
 	{
@@ -485,7 +485,7 @@ void link_neurons(struct network * network, char * filename)
       fgets(line, MAX_LINE_LEN, fp);
       while(fgets(line, MAX_LINE_LEN, fp) != NULL)
 	{
-	  sscanf(line, "%ld %ld %ld %ld %f %f", &from, &from_compartment, &to, &to_compartment, &weight, &ctime);
+	  sscanf(line, "%ld %ld %ld %ld %lf %lf", &from, &from_compartment, &to, &to_compartment, &weight, &ctime);
 	  network->neurons[from]->links[num_created[from]++] = create_link(from, from_compartment, to, to_compartment, weight, ctime);
 	}
 
@@ -510,9 +510,9 @@ void link_neurons(struct network * network, char * filename)
 // maloc()s a struct neuron_link;
 // populates it with given data;
 // returns pointer to new struct
-struct neuron_link * create_link(long from, long from_compartment, long to, long to_compartment, float weight, float ctime)
+struct neuron_link * create_link(long from, long from_compartment, long to, long to_compartment, double weight, double ctime)
 {
-  struct neuron_link * link = malloc(sizeof(struct neuron_link));
+  struct neuron_link * link = (struct neuron_link *)malloc(sizeof(struct neuron_link));
   link->from = from;
   link->from_compartment = from_compartment;
   link->to = to;
@@ -521,7 +521,7 @@ struct neuron_link * create_link(long from, long from_compartment, long to, long
   link->conduction_time = ctime;
 
   if(DEBUG > 1)
-    printf("* link: neuron %ld compartment %ld to neuron %ld compartment %ld, wieght %f, ctime %f\n", from, from_compartment, to, to_compartment, weight, ctime);
+    printf("* link: neuron %ld compartment %ld to neuron %ld compartment %ld, wieght %lf, ctime %lf\n", from, from_compartment, to, to_compartment, weight, ctime);
 
   return link;
 }
@@ -530,9 +530,9 @@ struct neuron_link * create_link(long from, long from_compartment, long to, long
 // determined and used to allocate the links struct without having read the entire @LINKS
 // section; therefore, a linked list of links to be created is made as @LINKS is parsed,
 // and this list is later gone through using create_queued_links
-void queue_link(struct link_queue * link_queue, long from, long from_compartment, long to, long to_compartment, float weight, float ctime)
+void queue_link(struct link_queue * link_queue, long from, long from_compartment, long to, long to_compartment, double weight, double ctime)
 {
-  struct link_node * node = malloc(sizeof(struct link_node));
+  struct link_node * node = (struct link_node *)malloc(sizeof(struct link_node));
   node->from = from;
   node->from_compartment = from_compartment;
   node->to = to;
@@ -561,14 +561,14 @@ void create_queued_links(struct network * network, struct link_queue * link_queu
   node = link_queue->head;
   long i;
 
-  int * num_created = malloc(network->size * sizeof(int));
+  int * num_created = (int *)malloc(network->size * sizeof(int));
   memset(num_created, 0, network->size * sizeof(int));
 
   for(i = 0; i < network->size; i++)
     {
       if(network->neurons[i]->num_links > 0)
 	{
-	  network->neurons[i]->links = malloc(network->neurons[i]->num_links * sizeof(struct neuron_link *));
+	  network->neurons[i]->links = (struct neuron_link **)malloc(network->neurons[i]->num_links * sizeof(struct neuron_link *));
 	}
     }
 
@@ -617,7 +617,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
 
   for(i = 0; i < params->num_params; i++)
     {
-      sprintf(line,"%s %f\n", params->names[i], params->values[i]);
+      sprintf(line,"%s %lf\n", params->names[i], params->values[i]);
       write_to_file(fp, line);
     }
 
@@ -628,7 +628,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
 
       for(j = 0; j < states->states[i]->num_params; j++)
 	{
-	  sprintf(line,"%s %f\n", states->states[i]->names[j], states->states[i]->values[j]);
+	  sprintf(line,"%s %lf\n", states->states[i]->names[j], states->states[i]->values[j]);
 	  write_to_file(fp, line);
 	}
     }
@@ -643,7 +643,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
 	  sprintf(line, "%ld %ld", i, k);
 	  for(j = 0; j < states->states[k]->num_params; j++)
 	    {
-	      sprintf(tmp, " %f", network->neurons[i]->compartments[k]->state->values[j]);
+	      sprintf(tmp, " %lf", network->neurons[i]->compartments[k]->state->values[j]);
 	      strcat(line, tmp);
 	    }
 	  strcat(line, "\n");
@@ -658,7 +658,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
     {
       for(j = 0; j < network->neurons[i]->num_links; j++)
 	{
-	  sprintf(line, "%ld %ld %ld %ld %f %f\n", network->neurons[i]->links[j]->from, network->neurons[i]->links[j]->from_compartment, network->neurons[i]->links[j]->to, network->neurons[i]->links[j]->to_compartment, network->neurons[i]->links[j]->weight, network->neurons[i]->links[j]->conduction_time);
+	  sprintf(line, "%ld %ld %ld %ld %lf %lf\n", network->neurons[i]->links[j]->from, network->neurons[i]->links[j]->from_compartment, network->neurons[i]->links[j]->to, network->neurons[i]->links[j]->to_compartment, network->neurons[i]->links[j]->weight, network->neurons[i]->links[j]->conduction_time);
 	  write_to_file(fp, line);
 	}
     }
@@ -684,7 +684,7 @@ void print_network(struct network * network)
 	  printf("\n* COMPARTMENT %ld\n", j);
 	  for(k = 0; k < network->neurons[i]->compartments[j]->state->num_params; k++)
 	    {
-	      printf("* %s = %f\n",network->neurons[i]->compartments[j]->state->names[k], network->neurons[i]->compartments[j]->state->values[k]);
+	      printf("* %s = %lf\n",network->neurons[i]->compartments[j]->state->names[k], network->neurons[i]->compartments[j]->state->values[k]);
 	    }
 	}
     }

@@ -29,7 +29,7 @@ void init_stimuli(struct network * network, char * filename)
 {
   struct stimuli * stimuli = init_stimuli_struct();
   long num_neuron, num_compartment;
-  float start, end, current;
+  double start, end, current;
   char line[MAX_LINE_LEN];
   FILE * fp = open_file_to_section(filename,"@STIMULI");
   
@@ -38,7 +38,7 @@ void init_stimuli(struct network * network, char * filename)
 
   while(strcmp(line,"") != 0 && strcmp(line,"0") != 0)
     {
-      sscanf(line, "%ld %ld %f %f %f", &num_neuron, &num_compartment, &start, &end, &current);
+      sscanf(line, "%ld %ld %lf %lf %lf", &num_neuron, &num_compartment, &start, &end, &current);
       if(num_neuron < 0 || num_neuron > network->size - 1)
 	{
 	  printf("init_stimuli(): config file says to stimulate neuron that doesn't exist (#%ld, network size is %ld\n",num_neuron,network->size);

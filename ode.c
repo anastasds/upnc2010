@@ -57,7 +57,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  i_KCa = KCa_current(network,i,j,f,y,t);
 	  i_CaT = CaT_current(network,i,j,f,y,t);
 	  i_L = L_current(network,i,j,f,y,t);
-	  i_NMDA = NMDA_current(network,i,j,f,y,t);
+	  i_NMDA = NMDA_current(network,i,j,f,y,t,i_CaT);
 	  i_AMPA = AMPA_current(network,i,j,f,y,t);
 
 	  // compartment 0 is the spine
@@ -114,11 +114,11 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      /*printf("%f ", t);
+      /*printf("%lf ", t);
       for(j = 0; j < num_state_params; j++)
-	printf("%f ",y[j]);
+	printf("%lf ",y[j]);
       for(j = 0; j < num_state_params; j++)
-	printf("%f ",y[num_state_params + j]);
+	printf("%lf ",y[num_state_params + j]);
 	printf("\n");*/
     }
   
