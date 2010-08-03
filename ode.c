@@ -103,10 +103,7 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
     gsl_odeiv_system sys = {hh_ode, NULL, dimension, network};
   #endif
 
-  // set up ode system, four odes per neuron
-  // 0 = V, 1 = n, 2 = m, 3 = h
   double y[num_state_params * network->size * network->compartments];
-
   for(i = 0; i < network->size; i++)
     for(j = 0; j < network->compartments; j++)
       for(k = 0; k < num_state_params; k++)
@@ -117,16 +114,12 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      printf("%f ", t);
-      /*
-      for(j = 0; j < network->size; j++)
-	printf("%f ", y[num_state_params*j]);
-      */
+      /*printf("%f ", t);
       for(j = 0; j < num_state_params; j++)
 	printf("%f ",y[j]);
       for(j = 0; j < num_state_params; j++)
 	printf("%f ",y[num_state_params + j]);
-      printf("\n");
+	printf("\n");*/
     }
   
   gsl_odeiv_evolve_free(e);

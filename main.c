@@ -27,6 +27,7 @@ int main(int argc, char** argv)
   if(argc > 2) output_state(network, init_compartment_states, params, argv[2]);
   else if(argc < 2) free(input_filename);
   cleanup(network, init_compartment_states, params);
+  free(runtime);
 
   return 0;
 }

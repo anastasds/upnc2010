@@ -97,8 +97,8 @@ void destroy_stimuli(struct stimuli * stimuli)
   struct stimulus * tmp;
   while((tmp = stimuli->head) != NULL)
     {
-      free(tmp);
       stimuli->head = tmp->next;
+      free(tmp);
     }
   free(stimuli);
 }

@@ -10,7 +10,7 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   double alpha_h, beta_h, tau_h, h_inf;
   double g_bar_Na, E_Na;
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
-
+  
   g_bar_Na = y[offset + 2];
   E_Na = network->neurons[0]->params->values[1];
 
