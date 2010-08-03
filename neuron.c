@@ -1,6 +1,7 @@
 #include "definitions.h"
 #include "includes.h"
 #include "neuron.h"
+#include "stimulate.h"
 
 // initializes struct network of size specified in input file;
 // creates each neuron in the network using create_neuron();
@@ -18,11 +19,14 @@ struct network * create_network(char * filename)
     printf("* network->size set to %ld, %ld compartments each\n",network->size, network->compartments);
 
   network->neurons = malloc(network->size*sizeof(struct neuron *));
+  network->stimuli = NULL;
+
   for(i = 0; i < network->size; i++)
     {
       network->neurons[i] = create_neuron();
       create_neuron_compartments(network->neurons[i],network->compartments);
     }
+
   return network;
 }
 
@@ -42,6 +46,7 @@ void create_neuron_compartments(struct neuron * neuron, long n)
       neuron->compartments[i] = (struct neuron_compartment *) malloc(sizeof(struct neuron_compartment));
       neuron->compartments[i]->neuron = neuron;
       neuron->compartments[i]->state = NULL;
+      neuron->compartments[i]->stimulated = FALSE;
     }
 }
 
@@ -281,6 +286,9 @@ void destroy_init_compartment_states(struct init_compartment_states * init_compa
 void destroy_network(struct network * network)
 {
   long i, j, k;
+
+  destroy_stimuli(network->stimuli);
+
   for(i = 0; i < network->size; i++)
     {
       for(k = 0; k < network->compartments; k++)

@@ -20,6 +20,7 @@ struct neuron {
 struct neuron_compartment {
   struct neuron * neuron;
   struct compartment_state * state;
+  int stimulated;
 };
 
 struct compartment_state {
@@ -43,6 +44,7 @@ struct network {
   long size;
   long compartments;
   struct neuron ** neurons;
+  struct stimuli * stimuli;
 };
 
 struct neuron_link {
@@ -67,6 +69,20 @@ struct link_node {
   float weight;
   float ctime;
   struct link_node * next;
+};
+
+struct stimulus {
+  long neuron;
+  long compartment;
+  double from;
+  double to;
+  double current;
+  struct stimulus * next;
+};
+
+struct stimuli {
+  struct stimulus * head;
+  struct stimulus * tail;
 };
 
 struct network * create_network(char * filename);

@@ -29,7 +29,10 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 10.0
+I_e 0.0
+
+@STIMULI
+0 1 0.0 75.0 0.0
 
 @DEFAULT_STATE 0
 25

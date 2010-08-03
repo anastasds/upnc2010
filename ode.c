@@ -4,6 +4,7 @@
 #include "neuron.h"
 #include "ode.h"
 #include "currents.h"
+#include "stimulate.h"
 
 #ifdef THREADED
 void * ode_update_neurons_threaded(void * thread_params)
@@ -27,7 +28,6 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   // get general network parameters that are the same for each neuron
   network_params = network->neurons[start]->params;
   C_m = network_params->values[0];
-  I_e = network_params->values[26];
 
   num_state_params = network->neurons[start]->compartments[0]->state->num_params;
 
@@ -43,6 +43,11 @@ void ode_update_neurons(struct network * network, long start, long num, const do
     {
       for(j = 0; j < network->compartments; j++)
 	{
+	  if(network->neurons[i]->compartments[j]->stimulated == TRUE)
+	      I_e = apply_stimulus(network, i, j, t);
+	  else
+	    I_e = network_params->values[26];
+
 	  offset = num_state_params * network->compartments * i + num_state_params * j;
 
 	  // figure out individual currents

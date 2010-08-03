@@ -25,6 +25,10 @@ CONFIG FILE
 [char* param_name] [float param_value]
 ...
 
+@STIMULI
+[long num_neuron] [long num_compartment] [double from_time] [double to_time] [double electrode_current]
+...
+
 @DEFAULT_STATE [long compartment_number]
 [int number_of_params_for_each_compartment]
 [char * param_name] [ float param_value]

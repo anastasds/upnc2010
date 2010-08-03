@@ -3,6 +3,7 @@
 #include "math_includes.h"
 #include "general.h"
 #include "neuron.h"
+#include "stimulate.h"
 #include "ode.h"
 
 int main(int argc, char** argv)
@@ -11,7 +12,8 @@ int main(int argc, char** argv)
   struct network * network = create_network(input_filename);
   struct neuron_params * params = init_neuron_params(input_filename);
   struct init_compartment_states * init_compartment_states = init_init_compartment_states(network, input_filename);
-  
+
+  init_stimuli(network, input_filename);
   init_network_states(network, init_compartment_states);
   init_nondefault_states(network, input_filename);
   assoc_network_params(network, params);
