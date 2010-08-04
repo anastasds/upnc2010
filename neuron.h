@@ -100,7 +100,7 @@ void destroy_init_compartment_states(struct init_compartment_states * init_compa
 void destroy_network(struct network * network);
 void cleanup(struct network * network, struct init_compartment_states * init_compartment_states, struct neuron_params * params);
 FILE * open_file_to_section(char * filename, char * section);
-void remove_newline(char * line);
+char * remove_newline(char * line);
 void link_neurons(struct network * network, char * filename);
 struct neuron_link * create_link(long from, long from_compartment, long to, long to_compartment, double weight, double ctime);
 void queue_link(struct link_queue * link_queue, long from, long from_compartment, long to, long to_compartment, double weight, double ctime);

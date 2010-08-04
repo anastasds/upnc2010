@@ -12,7 +12,7 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
   
   g_bar_Na = y[offset + 2];
-  E_Na = network->neurons[0]->params->values[1];
+  E_Na = network->neurons[num_neuron]->params->values[1];
 
   // sodium, from Dayan & Abbott
   alpha_m = 0.38*(y[offset] + 29.7) / (1.0 - exp(-0.1*(y[offset]+29.7)));
@@ -38,7 +38,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_K = y[offset + 4];
-  E_K = network->neurons[0]->params->values[2];
+  E_K = network->neurons[num_neuron]->params->values[2];
 
   // potassium, from Dayan & Abbott
   alpha_n = 0.02*(y[offset] + 45.7)/(1.0 - exp(-0.1*(y[offset]+45.7)));
@@ -58,7 +58,7 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_A = y[offset + 3];
-  E_A = network->neurons[0]->params->values[3];
+  E_A = network->neurons[num_neuron]->params->values[3];
 
   // A-current, from Dayan & Abbott
   a_inf = pow((0.0761 * exp(0.0314 * (y[offset] + 94.22))) / (1.0 + exp(0.0346 * (y[offset] + 1.17))), (1.0/3.0));
@@ -80,7 +80,7 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_KCa = y[offset + 5];
-  E_K = network->neurons[0]->params->values[2];
+  E_K = network->neurons[num_neuron]->params->values[2];
 
   // calcium-dependent potassium current, from Dayan & Abbott
   c_inf = y[offset + 18] / (y[offset + 18] + 3.0) * (1.0 / (1.0 + exp((y[offset] + 28.3) / -12.6)));
@@ -98,7 +98,7 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_CaT = y[offset + 6];
-  E_Ca = network->neurons[0]->params->values[5];
+  E_Ca = network->neurons[num_neuron]->params->values[5];
 
   // transient calcium current as mentioned in Porazi et al. 2003 supplement but as defined in Dayan & Abbot
   M_inf = 1.0 / (1.0 + exp((y[offset] + 57.0) / -6.2));
@@ -122,7 +122,7 @@ double L_current(struct network * network, long num_neuron, long num_compartment
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_L = y[offset + 1];
-  E_L = network->neurons[0]->params->values[4];
+  E_L = network->neurons[num_neuron]->params->values[4];
 
   // leak current
   return -1.0*(g_bar_L * (y[offset] - E_L));
@@ -143,9 +143,9 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
 
   g_bar_NMDA_Ca = y[offset + 7];
   g_bar_NMDA_syn = y[offset + 8];
-  E_Ca = network->neurons[0]->params->values[5];
-  E_NMDA_syn = network->neurons[0]->params->values[6];
-  Mg_conc = network->neurons[0]->params->values[17];
+  E_Ca = network->neurons[num_neuron]->params->values[5];
+  E_NMDA_syn = network->neurons[num_neuron]->params->values[6];
+  Mg_conc = network->neurons[num_neuron]->params->values[17];
   f_pre = presynaptic_activity(network, num_neuron, num_compartment);
 
   // NMDAR, from Rubin et al. 2005
@@ -157,19 +157,19 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   s_NMDA_slow = y[offset + 21];
   s_NMDA = s_NMDA_rise + s_NMDA_fast + s_NMDA_slow;
 
-  Phi_NMDA = network->neurons[0]->params->values[8];
-  tau_NMDA_rise = network->neurons[0]->params->values[9];
-  tau_NMDA_fast = network->neurons[0]->params->values[10];
-  tau_NMDA_slow = network->neurons[0]->params->values[11];
-  tau_Ca = network->neurons[0]->params->values[16];
-  Ca_resting_conc_soma = network->neurons[0]->params->values[18];
-  Ca_resting_conc_spine = network->neurons[0]->params->values[19];
-  Phi = network->neurons[0]->params->values[20];
-  beta_soma = network->neurons[0]->params->values[21];
-  beta_spine = network->neurons[0]->params->values[22];
-  eta_buff = network->neurons[0]->params->values[23];
-  beta_buff = network->neurons[0]->params->values[24];
-  Ca_diffusion_rate = network->neurons[0]->params->values[25];
+  Phi_NMDA = network->neurons[num_neuron]->params->values[8];
+  tau_NMDA_rise = network->neurons[num_neuron]->params->values[9];
+  tau_NMDA_fast = network->neurons[num_neuron]->params->values[10];
+  tau_NMDA_slow = network->neurons[num_neuron]->params->values[11];
+  tau_Ca = network->neurons[num_neuron]->params->values[16];
+  Ca_resting_conc_soma = network->neurons[num_neuron]->params->values[18];
+  Ca_resting_conc_spine = network->neurons[num_neuron]->params->values[19];
+  Phi = network->neurons[num_neuron]->params->values[20];
+  beta_soma = network->neurons[num_neuron]->params->values[21];
+  beta_spine = network->neurons[num_neuron]->params->values[22];
+  eta_buff = network->neurons[num_neuron]->params->values[23];
+  beta_buff = network->neurons[num_neuron]->params->values[24];
+  Ca_diffusion_rate = network->neurons[num_neuron]->params->values[25];
 
   // i_Ca
   i_Ca = i_CaT; // i_CaT passed as argument
@@ -182,8 +182,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
     }
   else
     {
-      long num_state_params = network->neurons[num_neuron]->compartments[0]->state->num_params;
-      f[offset + 18] = Phi * i_Ca - beta_soma * (y[offset + 18] - Ca_resting_conc_soma) + (y[offset + 18 - num_state_params] - y[offset + 18]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 18], 2.0);
+      f[offset + 18] = Phi * i_Ca - beta_soma * (y[offset + 18] - Ca_resting_conc_soma) + (y[offset + 18 - network->neurons[num_neuron]->compartments[0]->state->num_params] - y[offset + 18]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 18], 2.0);
     }
 
   f[offset + 19] = -1.0 * Phi_NMDA * (1.0 - s_NMDA_fast - s_NMDA_slow) * f_pre - s_NMDA_rise / tau_NMDA_rise;
@@ -191,7 +190,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   f[offset + 20] = Phi_NMDA * (0.527 - s_NMDA_fast) * f_pre - s_NMDA_fast / tau_NMDA_fast;
   f[offset + 21] = Phi_NMDA * (0.473 - s_NMDA_slow) * f_pre - s_NMDA_slow / tau_NMDA_slow;
 
-  return 1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
+  return -1.0*(g_bar_NMDA_syn * s_NMDA * m_NMDA_syn * (y[offset] - E_NMDA_syn));
 }
 
 double AMPA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
@@ -202,7 +201,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 
   g_bar_AMPA = y[offset + 9];
-  E_AMPA_syn = network->neurons[0]->params->values[7];
+  E_AMPA_syn = network->neurons[num_neuron]->params->values[7];
   f_pre = presynaptic_activity(network, num_neuron, num_compartment);
 
   // AMPAR, from Rubin et al. 2005
@@ -211,16 +210,16 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   s_AMPA_slow = y[offset + 24];
   s_AMPA = s_AMPA_rise + s_AMPA_fast + s_AMPA_slow;
   
-  Phi_AMPA = network->neurons[0]->params->values[12];
-  tau_AMPA_rise = network->neurons[0]->params->values[13];
-  tau_AMPA_fast = network->neurons[0]->params->values[14];
-  tau_AMPA_slow = network->neurons[0]->params->values[15];
+  Phi_AMPA = network->neurons[num_neuron]->params->values[12];
+  tau_AMPA_rise = network->neurons[num_neuron]->params->values[13];
+  tau_AMPA_fast = network->neurons[num_neuron]->params->values[14];
+  tau_AMPA_slow = network->neurons[num_neuron]->params->values[15];
 
   f[offset + 22] = -1.0 * Phi_AMPA * (1.0 - s_AMPA_fast - s_AMPA_slow) * f_pre - s_AMPA_rise / tau_AMPA_rise;
   f[offset + 23] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
   f[offset + 24] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
 
-  return 1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+  return -1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
 }
 
 double presynaptic_activity(struct network * network, long num_neuron, long num_compartment)
@@ -233,7 +232,7 @@ double presynaptic_activity(struct network * network, long num_neuron, long num_
       from_compartment = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from_compartment;
       presyn_V += network->neurons[from_neuron]->compartments[from_compartment]->state->values[0];
     }
-  if(presyn_V >= 0)
+  if(presyn_V > 0)
     return 1.0;
   return 0.0;
 }

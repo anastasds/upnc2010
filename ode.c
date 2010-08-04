@@ -71,7 +71,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	      i_in = I_e;
 	      i_coup = 1.125*(y[offset] - y[offset - num_state_params]);
 	    }
-	  	  
+
 	  // membrane current
 	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
 	  
@@ -114,12 +114,12 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
+
       printf("%lf ", t);
-      for(j = 0; j < num_state_params; j++)
-	printf("%lf ",y[j]);
-      for(j = 0; j < num_state_params; j++)
-	printf("%lf ",y[num_state_params + j]);
+      for(i = 0; i < network->size*network->compartments; i++)
+	printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
       printf("\n");
+
     }
   
   gsl_odeiv_evolve_free(e);

@@ -2,14 +2,14 @@
 2 2
 
 @RUNTIME
-0.0 350.0
+0.0 200.0
 
 @PARAMS
 27
 C_m 1.0
 E_Na 55.0
 E_K -72.0
-E_A -75.0
+E_A -77.0
 E_L -17.0
 E_Ca 140.0
 E_NMDA_syn 0.0
@@ -35,11 +35,11 @@ Ca_diffusion_rate 1000.0
 I_e 0.0
 
 @STIMULI
-0 0 -1.0 75.0 0.0
+
 
 @DEFAULT_STATE 0
 25
-V -68.0
+V -70.0
 g-bar_L 0.1
 g-bar_Na 7.0
 g-bar_A 12.0
@@ -67,7 +67,7 @@ s_AMPA_slow 0.0
 
 @DEFAULT_STATE 1
 25
-V -68.0
+V -70.0
 g-bar_L 0.1
 g-bar_Na 30.0
 g-bar_A 7.5

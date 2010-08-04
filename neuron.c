@@ -371,21 +371,23 @@ FILE * open_file_to_section(char * filename, char * section)
 // strips trailing \n from given string if it in offset MAX_LINE_LEN or less;
 // char *s that are given to this function generally contain data read from a file,
 // so they are generally allocated of max size MAX_LINE_LEN, so this should be fine
-void remove_newline(char * line)
+char * remove_newline(char * line)
 {
   int i = 0;
   while(*(line + i++) != '\n');
   if(i-1 <= MAX_LINE_LEN)
     line[i-1] = '\0';
+  return line;
 }
 
 // parses config file's @LINKS section to create links between neurons
 void link_neurons(struct network * network, char * filename)
 {
   int random_weights, random_ctimes;
-  long i, j, from, from_compartment, to, to_compartment;
+  long i, j, from, from_compartment, to, to_compartment, links_found = 0;
   double weight, ctime, p_connected, r, default_weight, default_ctime;
   char line[MAX_LINE_LEN];
+  int * num_created;
 
   if(DEBUG > 0)
     printf("* link_neurons\n");
@@ -467,40 +469,44 @@ void link_neurons(struct network * network, char * filename)
       if(DEBUG > 0)
 	printf("* specifically defined network selected\n");
 
-      while(fgets(line, MAX_LINE_LEN, fp) != NULL && strlen(line) > 0)
+      while(fgets(line, MAX_LINE_LEN, fp) != NULL && strlen(line) > 1)
 	{
 	  sscanf(line, "%ld %ld %ld %ld", &from, &from_compartment, &to, &to_compartment);
 	  if(DEBUG > 1)
 	    printf("found link to neuron %ld compartment %ld\n",to, to_compartment);
 	  network->neurons[to]->compartments[to_compartment]->num_links++;
+	  links_found++;
 	}
-      fclose(fp);
 
-      int * num_created = (int *)malloc(network->size * network->compartments * sizeof(int));
-      memset(num_created, 0, network->size * network->compartments * sizeof(int));
-      for(i = 0; i < network->size; i++)
-	  for(j = 0; j < network->compartments; j++)
-	    {
-	      if(network->neurons[i]->compartments[j]->num_links > 0)
-		network->neurons[i]->compartments[j]->links = (struct neuron_link **)malloc(network->neurons[i]->compartments[j]->num_links * sizeof(struct neuron_link *));
-	    }
-
-      fp = open_file_to_section(filename, "@LINKS");
-      fgets(line, MAX_LINE_LEN, fp);
-      while(fgets(line, MAX_LINE_LEN, fp) != NULL)
+      if(links_found > 0)
 	{
-	  sscanf(line, "%ld %ld %ld %ld %lf %lf", &from, &from_compartment, &to, &to_compartment, &weight, &ctime);
-	  network->neurons[to]->compartments[to_compartment]->links[num_created[network->compartments * to + to_compartment]++] = create_link(from, from_compartment, to, to_compartment, weight, ctime);
-	}
+	  num_created = (int *)malloc(network->size * network->compartments * sizeof(int));
+	  memset(num_created, 0, network->size * network->compartments * sizeof(int));
+	  for(i = 0; i < network->size; i++)
+	    for(j = 0; j < network->compartments; j++)
+	      {
+		if(network->neurons[i]->compartments[j]->num_links > 0)
+		  network->neurons[i]->compartments[j]->links = (struct neuron_link **)malloc(network->neurons[i]->compartments[j]->num_links * sizeof(struct neuron_link *));
+	      }
 
-      for(i = 0; i < network->size; i++)
-	for(j = 0; j < network->compartments; j++)
-	  if(network->neurons[i]->compartments[j]->num_links != num_created[network->compartments * i + j])
+	  fclose(fp);	 
+	  fp = open_file_to_section(filename, "@LINKS");
+	  fgets(line, MAX_LINE_LEN, fp);
+	  while(fgets(line, MAX_LINE_LEN, fp) != NULL && strlen(line) > 1)
 	    {
-	      printf("Error occurred while creating network links.\n");
-	      exit(-1);
+	      sscanf(line, "%ld %ld %ld %ld %lf %lf", &from, &from_compartment, &to, &to_compartment, &weight, &ctime);
+	      network->neurons[to]->compartments[to_compartment]->links[num_created[network->compartments * to + to_compartment]++] = create_link(from, from_compartment, to, to_compartment, weight, ctime);
 	    }
-      free(num_created);
+	  
+	  for(i = 0; i < network->size; i++)
+	    for(j = 0; j < network->compartments; j++)
+	      if(network->neurons[i]->compartments[j]->num_links != num_created[network->compartments * i + j])
+		{
+		  printf("Error occurred while creating network links.\n");
+		  exit(-1);
+		}
+	  free(num_created);
+	}
     }
   else
     {
