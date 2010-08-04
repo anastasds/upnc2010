@@ -2,7 +2,7 @@
 2 2
 
 @RUNTIME
-0.0 1000.0
+0.0 350.0
 
 @PARAMS
 27
@@ -32,10 +32,10 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 10.0
+I_e 0.0
 
 @STIMULI
-0 1 -1.0 75.0 0.0
+0 0 -1.0 75.0 0.0
 
 @DEFAULT_STATE 0
 25
@@ -99,4 +99,4 @@ s_AMPA_slow 0.0
 @LINKS
 defined
 0 1 1 0 0.5 0.5
-1 1 0 1 0.5 0.5
+1 1 0 0 0.5 0.5

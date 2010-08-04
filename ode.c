@@ -114,12 +114,12 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      /*printf("%lf ", t);
+      printf("%lf ", t);
       for(j = 0; j < num_state_params; j++)
 	printf("%lf ",y[j]);
       for(j = 0; j < num_state_params; j++)
 	printf("%lf ",y[num_state_params + j]);
-	printf("\n");*/
+      printf("\n");
     }
   
   gsl_odeiv_evolve_free(e);

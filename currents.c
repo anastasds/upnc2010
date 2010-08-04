@@ -146,7 +146,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   E_Ca = network->neurons[0]->params->values[5];
   E_NMDA_syn = network->neurons[0]->params->values[6];
   Mg_conc = network->neurons[0]->params->values[17];
-  f_pre = 0.0;
+  f_pre = presynaptic_activity(network, num_neuron, num_compartment);
 
   // NMDAR, from Rubin et al. 2005
   m_NMDA_Ca =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.124 * y[offset]));
@@ -203,7 +203,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
 
   g_bar_AMPA = y[offset + 9];
   E_AMPA_syn = network->neurons[0]->params->values[7];
-  f_pre = 0.0;
+  f_pre = presynaptic_activity(network, num_neuron, num_compartment);
 
   // AMPAR, from Rubin et al. 2005
   s_AMPA_rise = y[offset + 22];
@@ -221,4 +221,19 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   f[offset + 24] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
 
   return 1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+}
+
+double presynaptic_activity(struct network * network, long num_neuron, long num_compartment)
+{
+  long i, from_neuron, from_compartment;
+  double presyn_V = 0.0;
+  for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
+    {
+      from_neuron = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from;
+      from_compartment = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from_compartment;
+      presyn_V += network->neurons[from_neuron]->compartments[from_compartment]->state->values[0];
+    }
+  if(presyn_V >= 0)
+    return 1.0;
+  return 0.0;
 }

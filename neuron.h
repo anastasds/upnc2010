@@ -11,16 +11,16 @@ struct thread_params {
 };
 
 struct neuron {
-  int num_links;
   struct neuron_compartment ** compartments;
   struct neuron_params * params;
-  struct neuron_link ** links;
 };
 
 struct neuron_compartment {
   struct neuron * neuron;
   struct compartment_state * state;
   int stimulated;
+  int num_links;
+  struct neuron_link ** links;
 };
 
 struct compartment_state {
