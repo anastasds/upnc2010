@@ -117,7 +117,7 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
       printf("%lf ", t);
       for(i = 0; i < network->size*network->compartments; i++)
-	printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
+	  printf("%lf %lf ",y[num_state_params * i],y[num_state_params * i + 18]);
       printf("\n");
 
     }

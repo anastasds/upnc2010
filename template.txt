@@ -36,12 +36,12 @@ I_e 0.0
 temperature 23.0
 
 @STIMULI
-0 1 0 50 10
-0 1 100 150 10
+0 1 0 50 0
+0 1 100 150 0
 
 @DEFAULT_STATE 0
 25
-V -70.0
+V -78.25992
 g-bar_L 0.1
 g-bar_Na 7.0
 g-bar_A 12.0
@@ -51,14 +51,14 @@ g-bar_CaT 25.0
 g-bar_NMDA_Ca 25.0
 g-bar_NMDA_syn 0.3
 g-bar_AMPA 0.05
-n 0.3121
-m 0.0450
-h 0.8282
-a 0.6031
-b 0.0898
+n 0.0730
+m 0.0026
+h 0.9925
+a 0.4897
+b 0.5166
 c 0.0000
-S 0.5378
-T 0.0020
+S 0.0000
+T 1.000
 Ca_conc 0.07
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
@@ -69,7 +69,7 @@ s_AMPA_slow 0.0
 
 @DEFAULT_STATE 1
 25
-V -70.0
+V -77.378045
 g-bar_L 0.1
 g-bar_Na 30.0
 g-bar_A 7.5
@@ -79,14 +79,14 @@ g-bar_CaT 7.0
 g-bar_NMDA_Ca 0.0
 g-bar_NMDA_syn 0.0
 g-bar_AMPA 0.0
-n 0.3121
-m 0.0450
-h 0.8282
-a 0.6031
-b 0.0898
-c 0.0052
-s 0.5378
-t 0.0020
+n 0.0783
+m 0.0029
+h 0.9914
+a 0.4939
+b 0.4973
+c 0.0000
+S 0.0000
+T 1.0000
 Ca_conc 0.05
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
