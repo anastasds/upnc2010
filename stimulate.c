@@ -73,22 +73,25 @@ struct stimuli * init_stimuli_struct()
 
 double apply_stimulus(struct network * network, long num_neuron, long num_compartment, double t)
 {
-  struct stimulus * stimulus = find_stimulus(network->stimuli, num_neuron, num_compartment);
+  struct stimulus * stimulus = network->stimuli->head;
+  while(1)
+    {
+      stimulus = find_stimulus(stimulus, num_neuron, num_compartment);
+      if(stimulus == NULL)
+	return 0.0;
+      if(t > stimulus->from && t < stimulus->to)
+	return stimulus->current;
+      stimulus = stimulus->next;
+    }
 
-  if(stimulus == NULL)
-    return 0.0;
-
-  if(t > stimulus->from && t < stimulus->to)
-    return stimulus->current;
-
-  return 0.0;
 }
 
-struct stimulus * find_stimulus(struct stimuli * stimuli, long num_neuron, long num_compartment)
+struct stimulus * find_stimulus(struct stimulus * stimulus, long num_neuron, long num_compartment)
 {
-  struct stimulus * stimulus = stimuli->head;
   while(stimulus != NULL && (stimulus->neuron != num_neuron || stimulus->compartment != num_compartment))
-    stimulus = stimulus->next;
+    {
+      stimulus = stimulus->next;
+    }
   return stimulus;
 }
 

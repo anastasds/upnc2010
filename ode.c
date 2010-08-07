@@ -64,12 +64,12 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  if(j == 0)
 	    {
 	      i_in = i_NMDA + i_AMPA;
-	      i_coup = 1.125*(y[offset + num_state_params] - y[offset]);
+	      i_coup = 0.5*(y[offset + num_state_params] - y[offset]);
 	    }
 	  else
 	    {
 	      i_in = I_e;
-	      i_coup = 1.125*(y[offset] - y[offset - num_state_params]);
+	      i_coup = 0.5*(y[offset] - y[offset - num_state_params]);
 	    }
 
 	  // membrane current

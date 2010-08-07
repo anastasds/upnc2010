@@ -2,15 +2,15 @@
 2 2
 
 @RUNTIME
-0.0 200.0
+0.0 250.0
 
 @PARAMS
-27
+28
 C_m 1.0
-E_Na 55.0
-E_K -72.0
-E_A -77.0
-E_L -17.0
+E_Na 60.0
+E_K -80.0
+E_A -80.0
+E_L -70.0
 E_Ca 140.0
 E_NMDA_syn 0.0
 E_AMPA_syn 0.0
@@ -33,9 +33,11 @@ eta_buff 6.0
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
 I_e 0.0
+temperature 23.0
 
 @STIMULI
-
+0 1 0 50 10
+0 1 100 150 10
 
 @DEFAULT_STATE 0
 25
@@ -54,9 +56,9 @@ m 0.0450
 h 0.8282
 a 0.6031
 b 0.0898
-c 0.0052
-M 0.5378
-H 0.0020
+c 0.0000
+S 0.5378
+T 0.0020
 Ca_conc 0.07
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
@@ -83,8 +85,8 @@ h 0.8282
 a 0.6031
 b 0.0898
 c 0.0052
-M 0.5378
-H 0.0020
+s 0.5378
+t 0.0020
 Ca_conc 0.05
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
