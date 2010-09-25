@@ -20,6 +20,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   double C_m, I_e, i_m;
   double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in, i_coup;
   long i, j, k, offset, num_state_params, limit = start + num;
+  double coupling_factor;
   struct neuron_params * network_params;
 
   if(network->size < limit)
@@ -28,6 +29,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   // get general network parameters that are the same for each neuron
   network_params = network->neurons[start]->params;
   C_m = network_params->values[0];
+  coupling_factor = network_params->values[28];
 
   num_state_params = network->neurons[start]->compartments[0]->state->num_params;
 
@@ -44,7 +46,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
       for(j = 0; j < network->compartments; j++)
 	{
 	  if(network->neurons[i]->compartments[j]->stimulated == TRUE)
-	      I_e = apply_stimulus(network, i, j, t);
+	    I_e = apply_stimulus(network, i, j, t);
 	  else
 	    I_e = network_params->values[26];
 
@@ -63,19 +65,32 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  // compartment 0 is the spine
 	  if(j == 0)
 	    {
-	      i_in = i_NMDA + i_AMPA;
-	      i_coup = 0.5*(y[offset + num_state_params] - y[offset]);
+	      i_in = 1.0*(i_NMDA + i_AMPA);
+	      i_coup = 1.0*coupling_factor*(y[offset + num_state_params] - y[offset]);
 	    }
 	  else
 	    {
 	      i_in = I_e;
-	      i_coup = 0.5*(y[offset] - y[offset - num_state_params]);
+	      i_coup = 1.0*coupling_factor*(y[offset - num_state_params] - y[offset]);
 	    }
 
 	  // membrane current
 	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
 	  
 	  // update derivatives (first state variable is voltage)
+	  if(network->neurons[i]->compartments[j]->flag == -1)
+	    {
+	      if(y[offset] > 10)
+		{
+		  network->neurons[i]->compartments[j]->flag = 1;
+		  network->neurons[i]->compartments[j]->spike_count++;
+		}
+	    }
+	  else
+	    {
+	      if(y[offset] < -10)
+		network->neurons[i]->compartments[j]->flag = -1;
+	    }
 	  f[offset] = i_m/C_m;
 	  
 	  // keep conductances constant
@@ -114,18 +129,22 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-
+      /*          
       printf("%lf ", t);
-      for(i = 0; i < network->size*network->compartments; i++)
-	  printf("%lf %lf ",y[num_state_params * i],y[num_state_params * i + 18]);
+      for(i = 0; i < network->size * network->compartments; i++)
+	printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
       printf("\n");
-
+      */
     }
   
   gsl_odeiv_evolve_free(e);
   gsl_odeiv_control_free(c);
   gsl_odeiv_step_free(s);
-
+  
+  for(i = 0; i < network->size; i++)
+    for(j = 0; j < network->compartments; j++)
+      printf("%ld %ld %ld\n",i,j,network->neurons[i]->compartments[j]->spike_count);
+  
   return 0;
 }
 

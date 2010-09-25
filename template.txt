@@ -2,10 +2,10 @@
 2 2
 
 @RUNTIME
-0.0 250.0
+0.0 1000.0
 
 @PARAMS
-28
+29
 C_m 1.0
 E_Na 60.0
 E_K -80.0
@@ -32,16 +32,16 @@ beta_spine 0.083
 eta_buff 6.0 
 beta_buff 0.0
 Ca_diffusion_rate 1000.0
-I_e 0.0
+I_e 12.0
 temperature 23.0
+coupling_factor 1.125
 
 @STIMULI
-0 1 0 50 0
-0 1 100 150 0
+
 
 @DEFAULT_STATE 0
-25
-V -78.25992
+26
+V -70.07
 g-bar_L 0.1
 g-bar_Na 7.0
 g-bar_A 12.0
@@ -66,15 +66,16 @@ s_NMDA_slow 0.0
 s_AMPA_rise 0.0
 s_AMPA_fast 0.0
 s_AMPA_slow 0.0
+i 0.0
 
 @DEFAULT_STATE 1
-25
-V -77.378045
+26
+V -70.07
 g-bar_L 0.1
 g-bar_Na 30.0
 g-bar_A 7.5
 g-bar_Kdr 14.0
-g-bar_KCa 25.0
+g-bar_KCa 0
 g-bar_CaT 7.0
 g-bar_NMDA_Ca 0.0
 g-bar_NMDA_syn 0.0
@@ -94,11 +95,11 @@ s_NMDA_slow 0.0
 s_AMPA_rise 0.0
 s_AMPA_fast 0.0
 s_AMPA_slow 0.0
-
+i 0.0
 
 @INIT_STATES
+
 
 @LINKS
 defined
 0 1 1 0 0.5 0.5
-1 1 0 0 0.5 0.5

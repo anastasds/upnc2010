@@ -4,6 +4,11 @@
 #include "neuron.h"
 #include "currents.h"
 
+double max(double a, double b)
+{
+  return a >= b ? a : b;
+}
+
 double Na_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double alpha_m, beta_m, tau_m, m_inf;
@@ -14,6 +19,7 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   g_bar_Na = y[offset + 2];
   E_Na = network->neurons[num_neuron]->params->values[1];
 
+  /*
   // sodium, from Dayan & Abbott
   alpha_m = 0.38*(y[offset] + 29.7) / (1.0 - exp(-0.1*(y[offset]+29.7)));
   beta_m = 15.2*exp(-0.0556*(y[offset]+54.7));
@@ -29,6 +35,52 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   f[offset + 12] = (h_inf - y[offset + 12])/(tau_h);
   
   return -1.0*(g_bar_Na * pow(y[offset + 11],3.0) * y[offset + 12] * (y[offset] - E_Na));
+  */
+
+  double alphams, betams, alphahs, betahs, M_Spininf, M_Spintau, H_Somainf, H_Spininf, H_Somatau, H_Spintau, I_Spininf, I_Spintau, Q, M_Soma;
+  double tempC = network->neurons[num_neuron]->params->values[27];
+
+  Q = 96480 / (8.315 * (273.16 + tempC));
+
+  // compartment 0 is the spine
+  if(num_compartment == 0)
+    {
+      M_Spininf = 1.0 / (1.0 + exp((-1.0*y[offset] - 40.0)/3));
+      M_Spintau = 0.1;
+
+      // Na inactivation
+      H_Spininf = 1.0 / (1.0 + exp((y[offset] + 45.0) / 3.0));
+      H_Spintau = 0.5;
+      
+      // Na attenuation. Set to 1 since it's not clear if the spine should show attenuation.
+      I_Spininf = 1.0 / (1.0 + exp((y[offset] + 60.0) / 2.0));
+      I_Spintau = max(0.1,(0.00333 * exp(0.0024 * (y[offset] + 60.0) * Q))/(1.0 + exp(0.0012 * (y[offset] + 60.0) * Q)));
+            
+      f[offset + 11] = (M_Spininf - y[offset + 11]) / (M_Spintau);
+      f[offset + 12] = (H_Spininf - y[offset + 12]) / (H_Spintau);
+      f[offset + 25] = (I_Spininf - y[offset + 25]) / (I_Spintau);
+
+      return -1.0 * g_bar_Na * y[offset + 11] * y[offset + 11] * y[offset + 12] * y[offset + 25] * (y[offset] - E_Na);
+    }
+  else
+    {
+      alphams = 0.32 * (-46.9 - y[offset])/(exp( (-46.9 - y[offset]) / 4.0) - 1.0);
+      betams = 0.28 * (y[offset] + 19.9)/(exp((y[offset] + 19.9) / 5.0) - 1.0);
+      alphahs = 0.128 * exp((-43.0 - y[offset]) / 18.0);
+      betahs = 4.0 / (1.0 + exp((-20.0 - y[offset]) / 5.0));
+      
+      M_Soma = alphams / (alphams + betams);
+
+      // Na inactivation
+      H_Somainf = 1.0 / (1.0 + exp((y[offset] + 49.0) / 3.5));
+      H_Somatau = 1.0;
+
+      f[offset + 11] = 0.0;
+      f[offset + 12] = alphahs - (alphahs + betahs) * y[offset + 12];
+      f[offset + 25] = 0.0;
+
+      return -1.0 * g_bar_Na * M_Soma * M_Soma * y[offset + 12] * (y[offset] - E_Na);
+    }
 }
 
 double Kdr_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
@@ -40,6 +92,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   g_bar_K = y[offset + 4];
   E_K = network->neurons[num_neuron]->params->values[2];
 
+  /*
   // potassium, from Dayan & Abbott
   alpha_n = 0.02*(y[offset] + 45.7)/(1.0 - exp(-0.1*(y[offset]+45.7)));
   beta_n = 0.25*exp(-0.0125*(y[offset]+55.7));
@@ -49,7 +102,43 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   f[offset + 10] = (n_inf - y[offset + 10])/(tau_n);
 
   return -1.0*(g_bar_K * pow(y[offset + 10],4.0) * (y[offset] - E_K));
+  */
+
+  // from Rubin et al. 2005
+  double N_Somainf, N_Spininf, N_Somatau, N_Spintau, alphans, betans;
+
+  // compartment 0 is the spine
+  if(num_compartment == 0)
+    {
+      alphans = 0.016*(-24.9-y[offset])/(exp((-24.9-y[offset])/5.0)-1.0);
+      betans =  0.25*exp(-1.0-0.025*y[offset]);
+      N_Somainf = 1.0/(1.0 + exp((-1.0*y[offset] - 46.3) / 3.0));
+      N_Somatau = 3.5;
+
+      f[offset + 10] = alphans - (alphans + betans) * y[offset + 10];
+      return -1.0 * g_bar_K * y[offset + 10] * y[offset + 10] * (y[offset] - E_K);
+    }
+  else
+    {
+      N_Spininf = 1.0/(1.0 + exp((-1.0*y[offset] - 42.0) / 2.0));
+      N_Spintau = 2.2;
+      f[offset + 10] = (N_Spininf - y[offset + 10]) / (N_Spintau);
+      return -1.0 * g_bar_K * y[offset + 10] * (y[offset] - E_K);
+    }
+
 }
+
+double zeta(double v)
+{
+  double zetap = 30.0;
+  return -1.5 - (1.0 / (1.0 + exp(v + zetap) / 5.0));
+}
+
+double zeta2(double v)
+{
+  return -1.8 - (1.0 / (1.0 + exp(v + 40.0) / 5.0));
+}
+
 
 double A_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
@@ -60,6 +149,7 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   g_bar_A = y[offset + 3];
   E_A = network->neurons[num_neuron]->params->values[3];
 
+  /*
   // A-current, from Dayan & Abbott
   a_inf = pow((0.0761 * exp(0.0314 * (y[offset] + 94.22))) / (1.0 + exp(0.0346 * (y[offset] + 1.17))), (1.0/3.0));
   tau_a = 0.3632 + 1.158 / (1.0 + exp(0.0497 * (y[offset] + 55.96)));
@@ -71,6 +161,54 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   f[offset + 14] = (b_inf - y[offset + 14])/(tau_b);
   
   return -1.0*(g_bar_A * pow(y[offset + 13],3.0) * y[offset + 14] * (y[offset] - E_A));
+  */
+
+  double A_SpnAlf, A_SpnBet, A_Spininf, A_Spintau, B_Spininf, B_Spintau, A_SmaAlf, A_SmaBet, A_Somainf, A_Somatau, B_Somainf, B_Somatau;
+
+  double tempC = network->neurons[num_neuron]->params->values[27];
+
+  double Q = 96480 / (8.315 * (273.16 + tempC));
+  double QT = pow(5.0,(tempC-24.0)/10.0);
+
+  // K a-type activation
+  double asap = 0.001;
+
+  // K a-type Inactivation
+  double btaumod=7, inact=72, inact2=0.11, inact3=2, inact4=64, inact5=1, zetap=30;
+
+
+  // compartment 0 is the spine
+  if(num_compartment == 0)
+    {
+      A_SpnAlf = exp(asap*zeta(y[offset])*(y[offset]+1.0)*Q);
+      A_SpnBet = exp(0.00039*Q*(y[offset]+1.0)*zeta2(y[offset]));
+
+      A_Spininf = 1.0/(1.0 + A_SpnAlf);
+      A_Spintau = max(A_SpnBet/((1.0+A_SpnAlf)*QT*0.1),0.1);
+  
+      B_Spininf = 0.3 + 0.7/(1.0 + exp(inact2 * (y[offset] + inact)*Q));
+      B_Spintau = btaumod * max(inact3 * (y[offset] + inact4),inact5);
+
+      f[offset + 13] = (A_Spininf - y[offset + 13]) / (A_Spintau);
+      f[offset + 14] = (B_Spininf - y[offset + 14]) / (B_Spintau);
+    }
+  else
+    {
+      A_SmaAlf = exp(0.001*zeta(y[offset])*(y[offset]-11.0)*Q);
+      A_SmaBet = exp(0.00055*Q*(y[offset]-11.0)*zeta(y[offset]));
+
+      A_Somainf = 1.0/(1.0+A_SmaAlf);
+      A_Somatau = max(A_SmaBet/((1.0+A_SmaAlf)*QT*0.05),0.1);
+
+      B_Somainf = 0.3 + 0.7/(1.0 + exp(0.02*(y[offset] + 63.5)*Q));
+      B_Somatau = btaumod * max(0.11*(y[offset]+62.0),2.0);
+
+      f[offset + 13] = (A_Somainf - y[offset + 13])/(A_Somatau);
+      f[offset + 14] = (B_Somainf - y[offset + 14])/(B_Somatau);
+    }
+
+  return -1.0 * g_bar_A * y[offset + 13] * y[offset + 14] * (y[offset] - E_A);
+
 }
 
 double KCa_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
@@ -95,7 +233,8 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
 
   return -1.0*(g_bar_KCa * pow(y[offset + 15],4.0) * (y[offset] - E_K));
   */
-
+  
+  // calcium-dependent potassium current, from Rubin et al. 2005
   Q = 96480 / (8.315 * (273.16 + temperature));
   Qm_SmaAlf = qma * y[offset + 18] / (0.001 * y[offset + 18] + 0.18 * exp(-1.68 * y[offset] * Q));
   Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 18]);
@@ -311,7 +450,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   f[offset + 23] = Phi_AMPA * (0.903 - s_AMPA_fast) * f_pre - s_AMPA_fast / tau_AMPA_fast;
   f[offset + 24] = Phi_AMPA * (0.097 - s_AMPA_slow) * f_pre - s_AMPA_slow / tau_AMPA_slow;
 
-  return -1.0*(g_bar_AMPA * s_AMPA * (y[offset] - E_AMPA_syn));
+  return -1.0*(g_bar_AMPA * s_AMPA  * (y[offset] - E_AMPA_syn));
 }
 
 double presynaptic_activity(struct network * network, long num_neuron, long num_compartment)

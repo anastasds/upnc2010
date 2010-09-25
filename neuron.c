@@ -59,6 +59,8 @@ void create_neuron_compartments(struct neuron * neuron, long n)
       neuron->compartments[i]->links = NULL;
       neuron->compartments[i]->num_links = 0;
       neuron->compartments[i]->stimulated = FALSE;
+      neuron->compartments[i]->spike_count = 0;
+      neuron->compartments[i]->flag = -1;
     }
 }
 

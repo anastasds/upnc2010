@@ -21,6 +21,8 @@ struct neuron_compartment {
   int stimulated;
   int num_links;
   struct neuron_link ** links;
+  long spike_count;
+  int flag;
 };
 
 struct compartment_state {
