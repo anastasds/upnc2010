@@ -5,6 +5,7 @@
 #include "ode.h"
 #include "currents.h"
 #include "stimulate.h"
+#include "plasticity.h"
 
 #ifdef THREADED
 void * ode_update_neurons_threaded(void * thread_params)
@@ -96,6 +97,14 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  // keep conductances constant
 	  for(k = 1; k < 10; k++)
 	    f[k] = 0.0;
+
+	  // detector system
+	  f[offset + 26] = evolve_P(network,y,offset);
+	  f[offset + 27] = evolve_V(network,y,offset);
+	  f[offset + 28] = evolve_A(network,y,offset);
+	  f[offset + 29] = evolve_B(network,y,offset);
+	  f[offset + 30] = evolve_D(network,y,offset);
+	  f[offset + 31] = evolve_W(network,y,offset);
 	}
     }
 }
@@ -129,22 +138,29 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      /*          
+                
       printf("%lf ", t);
       for(i = 0; i < network->size * network->compartments; i++)
-	printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
+	{
+	  // print voltage, [Ca]
+	  printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
+
+	  // print synaptic plasticity values
+	  for(j = 0; j < 6; j++)
+	  printf("%lf ",y[num_state_params*i + 26 + j]);
+	}
       printf("\n");
-      */
+      
     }
   
   gsl_odeiv_evolve_free(e);
   gsl_odeiv_control_free(c);
   gsl_odeiv_step_free(s);
-  
+  /*
   for(i = 0; i < network->size; i++)
     for(j = 0; j < network->compartments; j++)
       printf("%ld %ld %ld\n",i,j,network->neurons[i]->compartments[j]->spike_count);
-  
+  */
   return 0;
 }
 

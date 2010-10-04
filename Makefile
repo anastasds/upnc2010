@@ -3,7 +3,7 @@ CFLAGS = -O3
 GSLFLAGS = -lgsl -lgslcblas -lm
 COMMON_INCLUDES = definitions.h includes.h
 MATH_INCLUDES = math_includes.h
-COMMON_OBJECTS = neuron.o general.o main.o currents.o stimulate.o
+COMMON_OBJECTS = neuron.o general.o main.o currents.o stimulate.o plasticity.o
 UNTHREADED_OBJECTS = $(COMMON_OBJECTS) ode_unthreaded.o
 THREADED_OBJECTS = $(COMMON_OBJECTS) ode_threaded.o
 
@@ -32,6 +32,9 @@ currents.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) neuron.h currents.h currents.c M
 
 stimlate.o: $(COMMON_INCLUDES) neuron.h stimulate.h stimulate.c Makefile
 	$(CC) $(CFLAGS) -c stimulate.c -o stimulate.o
+
+plasticity.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) neuron.h plasticity.h plasticity.c Makefile
+	$(CC) $(CFLAGS) $(GSLFLAGS) -c plasticity.c -o plasticity.o
 
 main.o: $(COMMON_INCLUDES) general.h neuron.h ode.h main.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) $(THREADING) -c main.c

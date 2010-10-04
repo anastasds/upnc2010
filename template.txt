@@ -2,10 +2,10 @@
 2 2
 
 @RUNTIME
-0.0 1000.0
+0.0 200.0
 
 @PARAMS
-29
+56
 C_m 1.0
 E_Na 60.0
 E_K -80.0
@@ -35,12 +35,39 @@ Ca_diffusion_rate 1000.0
 I_e 12.0
 temperature 23.0
 coupling_factor 1.125
+pHC 4
+aHC 0.6
+theta_v 2
+theta_d 2.6
+theta_b 0.55
+tau_p 500
+tau_a 5
+tau_v 10
+tau_d 250
+tau_b 40
+c_p 5
+tau_w 500
+alpha_w 0.8
+beta_w 0.6
+pHN 4
+aHN 3
+sigma_v -0.05
+sigma_d -0.01
+sigma_b -0.02
+k_p -0.1
+k_d -0.002
+alpha_v 1.0
+alpha_d 1.0
+alpha_b 5.0
+c_d 4
+p 0.3
+d 0.01
 
 @STIMULI
 
 
 @DEFAULT_STATE 0
-26
+32
 V -70.07
 g-bar_L 0.1
 g-bar_Na 7.0
@@ -67,9 +94,15 @@ s_AMPA_rise 0.0
 s_AMPA_fast 0.0
 s_AMPA_slow 0.0
 i 0.0
+P 0
+V 0
+A 0
+B 0
+D 0
+W 0
 
 @DEFAULT_STATE 1
-26
+32
 V -70.07
 g-bar_L 0.1
 g-bar_Na 30.0
@@ -96,6 +129,12 @@ s_AMPA_rise 0.0
 s_AMPA_fast 0.0
 s_AMPA_slow 0.0
 i 0.0
+P 0
+V 0
+A 0
+B 0
+D 0
+W 0
 
 @INIT_STATES
 
