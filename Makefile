@@ -30,8 +30,8 @@ ode_threaded.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) currents.c ode.h ode.c Makef
 currents.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) neuron.h currents.h currents.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) -c currents.c -o currents.o
 
-stimlate.o: $(COMMON_INCLUDES) neuron.h stimulate.h stimulate.c Makefile
-	$(CC) $(CFLAGS) -c stimulate.c -o stimulate.o
+stimlate.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) neuron.h stimulate.h stimulate.c Makefile
+	$(CC) $(CFLAGS) $(GSLFLAGS) -c stimulate.c -o stimulate.o
 
 plasticity.o: $(COMMON_INCLUDES) $(MATH_INCLUDES) neuron.h plasticity.h plasticity.c Makefile
 	$(CC) $(CFLAGS) $(GSLFLAGS) -c plasticity.c -o plasticity.o

@@ -40,12 +40,12 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   double alphams, betams, alphahs, betahs, M_Spininf, M_Spintau, H_Somainf, H_Spininf, H_Somatau, H_Spintau, I_Spininf, I_Spintau, Q, M_Soma;
   double tempC = network->neurons[num_neuron]->params->values[27];
 
-  Q = 96480 / (8.315 * (273.16 + tempC));
+  Q = 96480.0 / (8.315 * (273.16 + tempC));
 
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
-      M_Spininf = 1.0 / (1.0 + exp((-1.0*y[offset] - 40.0)/3));
+      M_Spininf = 1.0 / (1.0 + exp((-1.0*y[offset] - 40.0)/3.0));
       M_Spintau = 0.1;
 
       // Na inactivation
@@ -110,6 +110,13 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
+      N_Spininf = 1.0/(1.0 + exp((-1.0*y[offset] - 42.0) / 2.0));
+      N_Spintau = 2.2;
+      f[offset + 10] = (N_Spininf - y[offset + 10]) / (N_Spintau);
+      return -1.0 * g_bar_K * y[offset + 10] * (y[offset] - E_K);
+    }
+  else
+    {
       alphans = 0.016*(-24.9-y[offset])/(exp((-24.9-y[offset])/5.0)-1.0);
       betans =  0.25*exp(-1.0-0.025*y[offset]);
       N_Somainf = 1.0/(1.0 + exp((-1.0*y[offset] - 46.3) / 3.0));
@@ -117,13 +124,6 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
 
       f[offset + 10] = alphans - (alphans + betans) * y[offset + 10];
       return -1.0 * g_bar_K * y[offset + 10] * y[offset + 10] * (y[offset] - E_K);
-    }
-  else
-    {
-      N_Spininf = 1.0/(1.0 + exp((-1.0*y[offset] - 42.0) / 2.0));
-      N_Spintau = 2.2;
-      f[offset + 10] = (N_Spininf - y[offset + 10]) / (N_Spintau);
-      return -1.0 * g_bar_K * y[offset + 10] * (y[offset] - E_K);
     }
 
 }
@@ -167,7 +167,7 @@ double A_current(struct network * network, long num_neuron, long num_compartment
 
   double tempC = network->neurons[num_neuron]->params->values[27];
 
-  double Q = 96480 / (8.315 * (273.16 + tempC));
+  double Q = 96480.0 / (8.315 * (273.16 + tempC));
   double QT = pow(5.0,(tempC-24.0)/10.0);
 
   // K a-type activation
@@ -235,7 +235,7 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   */
   
   // calcium-dependent potassium current, from Rubin et al. 2005
-  Q = 96480 / (8.315 * (273.16 + temperature));
+  Q = 96480.0 / (8.315 * (273.16 + temperature));
   Qm_SmaAlf = qma * y[offset + 18] / (0.001 * y[offset + 18] + 0.18 * exp(-1.68 * y[offset] * Q));
   Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 18]);
 
@@ -243,6 +243,8 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   Qm_Smainf = qhat * Qm_SmaAlf * Qm_Smatau;
 
   f[offset + 15] = (Qm_Smainf - y[offset + 15]) / (Qm_Smatau);
+
+  // iKahpmSma=-gKmahpSma*Qm_Soma*(vSoma-vK)
   return -1.0 * g_bar_KCa * y[offset + 15] * (y[offset] - E_K);
 
 }

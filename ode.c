@@ -98,13 +98,23 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  for(k = 1; k < 10; k++)
 	    f[k] = 0.0;
 
-	  // detector system
-	  f[offset + 26] = evolve_P(network,y,offset);
-	  f[offset + 27] = evolve_V(network,y,offset);
-	  f[offset + 28] = evolve_A(network,y,offset);
-	  f[offset + 29] = evolve_B(network,y,offset);
-	  f[offset + 30] = evolve_D(network,y,offset);
-	  f[offset + 31] = evolve_W(network,y,offset);
+	  // detector system (compartment 0 is the spine)
+	  if(j == 0)
+	    {
+	      f[offset + 26] = evolve_P(network,y,offset);
+	      f[offset + 27] = evolve_V(network,y,offset);
+	      f[offset + 28] = evolve_A(network,y,offset);
+	      f[offset + 29] = evolve_B(network,y,offset);
+	      f[offset + 30] = evolve_D(network,y,offset);
+	      f[offset + 31] = evolve_W(network,y,offset);
+	    }
+	  else
+	    {
+	      for(k = 0; k < 6; k++)
+		{
+		  f[offset + 26 + k] = 0.0;
+		}
+	    }
 	}
     }
 }
@@ -147,7 +157,10 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
 	  // print synaptic plasticity values
 	  for(j = 0; j < 6; j++)
-	  printf("%lf ",y[num_state_params*i + 26 + j]);
+	    printf("%lf ",y[num_state_params*i + 26 + j]);
+
+	  // print change in synaptic weight
+	  //printf("%lf ",y[num_state_params*i + 31]);
 	}
       printf("\n");
       

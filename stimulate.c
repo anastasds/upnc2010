@@ -1,5 +1,6 @@
 #include "definitions.h"
 #include "includes.h"
+#include "math_includes.h"
 #include "neuron.h"
 #include "stimulate.h"
 
@@ -80,7 +81,10 @@ double apply_stimulus(struct network * network, long num_neuron, long num_compar
       if(stimulus == NULL)
 	return 0.0;
       if(t > stimulus->from && t < stimulus->to)
-	return stimulus->current;
+	{
+	  return stimulus->current;
+	  //return stimulus->current*(sin((t - stimulus->from)/(stimulus->to - stimulus->from) * M_PI));
+	}
       stimulus = stimulus->next;
     }
 
