@@ -113,7 +113,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
       N_Spininf = 1.0/(1.0 + exp((-1.0*y[offset] - 42.0) / 2.0));
       N_Spintau = 2.2;
       f[offset + 10] = (N_Spininf - y[offset + 10]) / (N_Spintau);
-      return -1.0 * g_bar_K * y[offset + 10] * (y[offset] - E_K);
+      return -1.0 * g_bar_K * y[offset + 10] * y[offset + 10] * (y[offset] - E_K);
     }
   else
     {
@@ -123,7 +123,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
       N_Somatau = 3.5;
 
       f[offset + 10] = alphans - (alphans + betans) * y[offset + 10];
-      return -1.0 * g_bar_K * y[offset + 10] * y[offset + 10] * (y[offset] - E_K);
+      return -1.0 * g_bar_K * y[offset + 10]  * (y[offset] - E_K);
     }
 
 }
@@ -131,12 +131,12 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
 double zeta(double v)
 {
   double zetap = 30.0;
-  return -1.5 - (1.0 / (1.0 + exp(v + zetap) / 5.0));
+  return -1.5 - (1.0 / (1.0 + exp((v + zetap) / 5.0)));
 }
 
 double zeta2(double v)
 {
-  return -1.8 - (1.0 / (1.0 + exp(v + 40.0) / 5.0));
+  return -1.8 - (1.0 / (1.0 + exp((v + 40.0) / 5.0)));
 }
 
 
@@ -288,7 +288,7 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
       tau_S = 3.6 + 0.0 / (1.0 + exp(y[offset] + 40.0));
 
       T_inf = 1.0 / (1.0 + exp((y[offset] + 41.0) / 0.5));
-      tau_T = 29;
+      tau_T = 29.0;
 
       f[offset + 16] = (S_inf - y[offset + 16]) / tau_S;
       f[offset + 17] = (T_inf - y[offset + 17]) / tau_T;
@@ -309,7 +309,7 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
       tau_S = 1.0 / (5.0 * (alpha_S + beta_S));
 
       T_inf = 1.0 / (1.0 + exp((y[offset] + 41) / 0.5));
-      tau_T = 29;
+      tau_T = 29.0;
 
       f[offset + 16] = (S_inf - y[offset + 16]) / tau_S;
       f[offset + 17] = (T_inf - y[offset + 17]) / tau_T;
