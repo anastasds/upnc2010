@@ -58,7 +58,7 @@ void create_neuron_compartments(struct neuron * neuron, long n)
       neuron->compartments[i]->state = NULL;
       neuron->compartments[i]->links = NULL;
       neuron->compartments[i]->num_links = 0;
-      neuron->compartments[i]->stimulated = FALSE;
+      neuron->compartments[i]->stimuli = NULL;
       neuron->compartments[i]->spike_count = 0;
       neuron->compartments[i]->flag = -1;
     }
@@ -300,8 +300,6 @@ void destroy_network(struct network * network)
 {
   long i, j, k, m;
 
-  destroy_stimuli(network->stimuli);
-
   for(i = 0; i < network->size; i++)
     {
       for(k = 0; k < network->compartments; k++)
@@ -311,13 +309,14 @@ void destroy_network(struct network * network)
 	  free(network->neurons[i]->compartments[k]->state->names);
 	  free(network->neurons[i]->compartments[k]->state->values);
 	  free(network->neurons[i]->compartments[k]->state);
-	  free(network->neurons[i]->compartments[k]);
+	  destroy_stimuli(network->neurons[i]->compartments[k]->stimuli);
 	  if(network->neurons[i]->compartments[k]->num_links > 0)
 	    {
 	      for(m = 0; m < network->neurons[i]->compartments[k]->num_links; m++)
 		free(network->neurons[i]->compartments[k]->links[m]);
 	      free(network->neurons[i]->compartments[k]->links);
 	    }
+	  free(network->neurons[i]->compartments[k]);
 	}
       free(network->neurons[i]->compartments);
       free(network->neurons[i]);
@@ -658,7 +657,8 @@ void output_state(struct network * network, struct init_compartment_states * sta
       for(k = 0; k < network->compartments; k++)
 	{
 	  sprintf(line, "%ld %ld", i, k);
-	  for(j = 0; j < states->states[k]->num_params; j++)
+	  //for(j = 0; j < states->states[k]->num_params; j++)
+	  for(j = 0; j < network->neurons[i]->compartments[k]->state->num_params; j++)
 	    {
 	      sprintf(tmp, " %lf", network->neurons[i]->compartments[k]->state->values[j]);
 	      strcat(line, tmp);

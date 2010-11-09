@@ -3,6 +3,7 @@
 #include "math_includes.h"
 #include "neuron.h"
 #include "currents.h"
+#include "stimulate.h"
 
 double max(double a, double b)
 {
@@ -45,7 +46,7 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
-      M_Spininf = 1.0 / (1.0 + exp((-1.0*y[offset] - 40.0)/3.0));
+      M_Spininf = 1.0 / (1.0 + exp((y[offset] + 40.0)/ -3.0));
       M_Spintau = 0.1;
 
       // Na inactivation
@@ -235,17 +236,24 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   */
   
   // calcium-dependent potassium current, from Rubin et al. 2005
-  Q = 96480.0 / (8.315 * (273.16 + temperature));
-  Qm_SmaAlf = qma * y[offset + 18] / (0.001 * y[offset + 18] + 0.18 * exp(-1.68 * y[offset] * Q));
-  Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 18]);
+  if(num_compartment == 0)
+    {
+	  return 0.0;
+	}
+  else
+    {
+	  Q = 96480.0 / (8.315 * (273.16 + temperature));
+	  Qm_SmaAlf = qma * y[offset + 18] / (0.001 * y[offset + 18] + 0.18 * exp(-1.68 * y[offset] * Q));
+	  Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 18]);
 
-  Qm_Smatau = 1.0 / (Qm_SmaAlf + Qm_SmaBet);
-  Qm_Smainf = qhat * Qm_SmaAlf * Qm_Smatau;
+	  Qm_Smatau = 1.0 / (Qm_SmaAlf + Qm_SmaBet);
+	  Qm_Smainf = qhat * Qm_SmaAlf * Qm_Smatau;
 
-  f[offset + 15] = (Qm_Smainf - y[offset + 15]) / (Qm_Smatau);
+	  f[offset + 15] = (Qm_Smainf - y[offset + 15]) / (Qm_Smatau);
 
-  // iKahpmSma=-gKmahpSma*Qm_Soma*(vSoma-vK)
-  return -1.0 * g_bar_KCa * y[offset + 15] * (y[offset] - E_K);
+	  // iKahpmSma=-gKmahpSma*Qm_Soma*(vSoma-vK)
+	  return -1.0 * g_bar_KCa * y[offset + 15] * (y[offset] - E_K);
+	}
 
 }
 
@@ -380,7 +388,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   E_Ca = network->neurons[num_neuron]->params->values[5];
   E_NMDA_syn = network->neurons[num_neuron]->params->values[6];
   Mg_conc = network->neurons[num_neuron]->params->values[17];
-  f_pre = presynaptic_activity(network, num_neuron, num_compartment);
+  f_pre = presynaptic_activity(network, num_neuron, num_compartment, t);
 
   // NMDAR, from Rubin et al. 2005
   m_NMDA_Ca =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.124 * y[offset]));
@@ -435,7 +443,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
 
   g_bar_AMPA = y[offset + 9];
   E_AMPA_syn = network->neurons[num_neuron]->params->values[7];
-  f_pre = presynaptic_activity(network, num_neuron, num_compartment);
+  f_pre = presynaptic_activity(network, num_neuron, num_compartment, t);
 
   // AMPAR, from Rubin et al. 2005
   s_AMPA_rise = y[offset + 22];
@@ -455,10 +463,15 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   return -1.0*(g_bar_AMPA * s_AMPA  * (y[offset] - E_AMPA_syn));
 }
 
-double presynaptic_activity(struct network * network, long num_neuron, long num_compartment)
+double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, double t)
 {
+  struct stimulus * stimulus = NULL;
   long i, from_neuron, from_compartment;
   double presyn_V;
+
+  if((stimulus = apply_stimulus(network, num_neuron, num_compartment, t)) != NULL && stimulus->direct == 0)
+    return 1.0;
+
   for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
     {
       from_neuron = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from;

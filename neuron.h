@@ -18,7 +18,7 @@ struct neuron {
 struct neuron_compartment {
   struct neuron * neuron;
   struct compartment_state * state;
-  int stimulated;
+  struct stimuli * stimuli;
   int num_links;
   struct neuron_link ** links;
   long spike_count;
@@ -74,11 +74,10 @@ struct link_node {
 };
 
 struct stimulus {
-  long neuron;
-  long compartment;
   double from;
   double to;
   double current;
+  int direct;
   struct stimulus * next;
 };
 

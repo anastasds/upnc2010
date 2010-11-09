@@ -23,6 +23,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   long i, j, k, offset, num_state_params, limit = start + num;
   double coupling_factor;
   struct neuron_params * network_params;
+  struct stimulus * stimulus;
 
   if(network->size < limit)
     limit = network->size;
@@ -46,10 +47,13 @@ void ode_update_neurons(struct network * network, long start, long num, const do
     {
       for(j = 0; j < network->compartments; j++)
 	{
-	  if(network->neurons[i]->compartments[j]->stimulated == TRUE)
-	    I_e = apply_stimulus(network, i, j, t);
-	  else
-	    I_e = network_params->values[26];
+	  stimulus = NULL;
+	  I_e = network_params->values[26];
+	  if((stimulus = apply_stimulus(network, i, j, t)) != NULL)
+	    {
+	      if(stimulus->direct == 1)
+		I_e = stimulus->current;
+	    }
 
 	  offset = num_state_params * network->compartments * i + num_state_params * j;
 
@@ -169,11 +173,13 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
   gsl_odeiv_evolve_free(e);
   gsl_odeiv_control_free(c);
   gsl_odeiv_step_free(s);
+  
   /*
   for(i = 0; i < network->size; i++)
     for(j = 0; j < network->compartments; j++)
       printf("%ld %ld %ld\n",i,j,network->neurons[i]->compartments[j]->spike_count);
   */
+
   return 0;
 }
 
