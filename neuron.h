@@ -10,6 +10,11 @@ struct thread_params {
   long num;
 };
 
+struct buffer {
+  int size;
+  float * values;
+};
+
 struct neuron {
   struct neuron_compartment ** compartments;
   struct neuron_params * params;
@@ -19,6 +24,7 @@ struct neuron_compartment {
   struct neuron * neuron;
   struct compartment_state * state;
   struct stimuli * stimuli;
+  struct buffer * buffer;
   int num_links;
   struct neuron_link ** links;
   long spike_count;
@@ -110,5 +116,7 @@ void output_state(struct network * network, struct init_compartment_states * sta
 void write_to_file(FILE * fp, char * line);
 void init_nondefault_states(struct network * network, char * filename);
 void print_network(struct network * network);
+struct buffer * allocate_buffer(int size);
+void print_buffer(struct buffer * buffer);
 
 #endif

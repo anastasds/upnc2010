@@ -55,6 +55,7 @@ void create_neuron_compartments(struct neuron * neuron, long n)
     {
       neuron->compartments[i] = (struct neuron_compartment *) malloc(sizeof(struct neuron_compartment));
       neuron->compartments[i]->neuron = neuron;
+      neuron->compartments[i]->buffer = allocate_buffer(BUFFER_SIZE);
       neuron->compartments[i]->state = NULL;
       neuron->compartments[i]->links = NULL;
       neuron->compartments[i]->num_links = 0;
@@ -62,6 +63,30 @@ void create_neuron_compartments(struct neuron * neuron, long n)
       neuron->compartments[i]->spike_count = 0;
       neuron->compartments[i]->flag = -1;
     }
+}
+
+struct buffer * allocate_buffer(int size)
+{
+  if(size == 0)
+    return NULL;
+
+  int i;
+  struct buffer * buf = (struct buffer *) malloc(sizeof(struct buffer));
+  buf->size = size;
+  buf->values = (float *) malloc(size * sizeof(float));
+  for(i = 0; i < size; i++)
+    buf->values[i] = 0.0;
+  return buf;
+}
+
+void print_buffer(struct buffer * buffer)
+{
+  if(buffer == NULL)
+    return;
+
+  int i;
+  for(i = 0; i < buffer->size; i++)
+    printf("%lf ",buffer->values[i]);
 }
 
 // malloc()'s a new struct neuron;

@@ -79,13 +79,27 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	      i_coup = 1.0*coupling_factor*(y[offset - num_state_params] - y[offset]);
 	    }
 
+	  
+	  //debug
+	  network->neurons[i]->compartments[j]->buffer->values[0] = i_Na;
+	  network->neurons[i]->compartments[j]->buffer->values[1] = i_Kdr;
+	  network->neurons[i]->compartments[j]->buffer->values[2] = i_A;
+	  network->neurons[i]->compartments[j]->buffer->values[3] = i_KCa;
+	  network->neurons[i]->compartments[j]->buffer->values[4] = i_CaT;
+	  network->neurons[i]->compartments[j]->buffer->values[5] = i_L;
+	  network->neurons[i]->compartments[j]->buffer->values[6] = i_NMDA;
+	  network->neurons[i]->compartments[j]->buffer->values[7] = i_AMPA;
+	  network->neurons[i]->compartments[j]->buffer->values[8] = i_in;
+	  network->neurons[i]->compartments[j]->buffer->values[9] = i_coup;
+	  
+
 	  // membrane current
 	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
 	  
 	  // update derivatives (first state variable is voltage)
 	  if(network->neurons[i]->compartments[j]->flag == -1)
 	    {
-	      if(y[offset] > 10)
+	      if(y[offset] > 0)
 		{
 		  network->neurons[i]->compartments[j]->flag = 1;
 		  network->neurons[i]->compartments[j]->spike_count++;
@@ -125,13 +139,14 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
 {
-  const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
+  //const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
+  const gsl_odeiv_step_type * T = gsl_odeiv_step_rkf45;
   long i, j, k, num_state_params = network->neurons[0]->compartments[0]->state->num_params;
   long dimension = network->size * network->compartments * num_state_params;
   int status;
   
   gsl_odeiv_step * s = gsl_odeiv_step_alloc(T, dimension);
-  gsl_odeiv_control * c = gsl_odeiv_control_y_new(error, 0.0);
+  gsl_odeiv_control * c = gsl_odeiv_control_y_new(error, error);
   gsl_odeiv_evolve * e = gsl_odeiv_evolve_alloc(dimension);
   
   // params: function, [jacobian], dimension, void * params
@@ -152,19 +167,29 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-                
+      
+      //debug
       printf("%lf ", t);
       for(i = 0; i < network->size * network->compartments; i++)
-	{
+	{ 
 	  // print voltage, [Ca]
 	  printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
 
+	  //print gating variables
+	  for(j = 10; j < 18; j++)
+	    printf("%lf ",y[num_state_params * i + j]);
+	  printf("%lf ",y[num_state_params * i + 25]);
+
 	  // print synaptic plasticity values
 	  for(j = 0; j < 6; j++)
-	    printf("%lf ",y[num_state_params*i + 26 + j]);
+	    printf("%lf ",y[num_state_params* i  + 26 + j]);
 
-	  // print change in synaptic weight
-	  //printf("%lf ",y[num_state_params*i + 31]);
+	  // print buffer (currently: holds various current values)
+	  // order: i_Na, i_Kdr, i_A, i_KCa, i_CaT, i_L, i_NMDA, i_AMPA, i_in, i_coup,
+	  // f_pre, i_Ca_NMDA, m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow,
+	  // s_AMPA_rise, s_AMPA_fast, s_AMPA_slow
+	  print_buffer(network->neurons[(i - (i % network->compartments)) / network->compartments]->compartments[i % network->compartments]->buffer);
+	  
 	}
       printf("\n");
       
