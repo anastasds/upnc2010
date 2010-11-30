@@ -51,8 +51,11 @@ struct neuron_params {
 struct network {
   long size;
   long compartments;
+  long num_discontinuities;
+  long passed_discontinuities;
   struct neuron ** neurons;
   struct stimuli * stimuli;
+  double * discontinuities;
 };
 
 struct neuron_link {
@@ -90,6 +93,7 @@ struct stimulus {
 struct stimuli {
   struct stimulus * head;
   struct stimulus * tail;
+  long length;
 };
 
 struct network * create_network(char * filename);

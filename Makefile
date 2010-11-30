@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O0 -g
+CFLAGS = -O3
 GSLFLAGS = -lgsl -lgslcblas -lm
 COMMON_INCLUDES = definitions.h includes.h
 MATH_INCLUDES = math_includes.h

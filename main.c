@@ -20,7 +20,7 @@ int main(int argc, char** argv)
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
 
-  //identify_discontinuities(network);
+  identify_discontinuities(network);
   ode_run(network, runtime[0], runtime[1], 1.0e-6, 1.0e-6);
 
   //print_network(network);

@@ -20,6 +20,9 @@ struct network * create_network(char * filename)
 
   network->neurons = (struct neuron **)malloc(network->size*sizeof(struct neuron *));
   network->stimuli = NULL;
+  network->num_discontinuities = 0;
+  network->discontinuities = NULL;
+  network->passed_discontinuities = 0;
 
   for(i = 0; i < network->size; i++)
     {
@@ -352,6 +355,9 @@ void destroy_network(struct network * network)
       free(network->neurons[i]);
     }
   free(network->neurons);
+  destroy_stimuli(network->stimuli);
+  if(network->num_discontinuities != 0)
+    free(network->discontinuities);
   free(network);
 }
 

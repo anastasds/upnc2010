@@ -139,6 +139,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
 {
+  double end_runtime = t1;
+
   //const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
   const gsl_odeiv_step_type * T = gsl_odeiv_step_rkf45;
   long i, j, k, num_state_params = network->neurons[0]->compartments[0]->state->num_params;
@@ -162,12 +164,20 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       for(k = 0; k < num_state_params; k++)
 	y[num_state_params * network->compartments * i + num_state_params * j + k] = network->neurons[i]->compartments[j]->state->values[k];
 
+  if(network->num_discontinuities != 0)
+    {
+      t1 = network->discontinuities[0];
+      for(i = 0; i < network->num_discontinuities; i++)
+	if(network->discontinuities[i] > end_runtime)
+	  network->discontinuities[i] = end_runtime;
+    }
+
   while (t < t1)
     {
       status = gsl_odeiv_evolve_apply(e, c, s, &sys, &t, t1, &step_size, y);
       if(status != GSL_SUCCESS)
 	break;
-      
+
       //debug
       printf("%lf ", t);
       for(i = 0; i < network->size * network->compartments; i++)
@@ -179,21 +189,32 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 	  for(j = 10; j < 18; j++)
 	    printf("%lf ",y[num_state_params * i + j]);
 	  printf("%lf ",y[num_state_params * i + 25]);
-	  */
+	  
 	  // print synaptic plasticity values
 	  for(j = 0; j < 6; j++)
 	    printf("%lf ",y[num_state_params* i  + 26 + j]);
-
+	  */
 	  // print buffer (currently: holds various current values)
 	  // order: i_Na, i_Kdr, i_A, i_KCa, i_CaT, i_L, i_NMDA, i_AMPA, i_in, i_coup,
 	  // f_pre, i_Ca_NMDA, m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow,
 	  // s_AMPA_rise, s_AMPA_fast, s_AMPA_slow
-	  print_buffer(network->neurons[(i - (i % network->compartments)) / network->compartments]->compartments[i % network->compartments]->buffer);
+	  //print_buffer(network->neurons[(i - (i % network->compartments)) / network->compartments]->compartments[i % network->compartments]->buffer);
 	}
       printf("\n");
-      
+
+      if(t >= t1 && network->num_discontinuities != 0)
+	{
+	  if(network->num_discontinuities - network->passed_discontinuities != 1)
+	    {
+	      network->passed_discontinuities++;
+	      t1 = network->discontinuities[network->passed_discontinuities];
+	    }
+	  else
+	    {
+	      t1 = end_runtime;
+	    }
+	}
     }
-  
   gsl_odeiv_evolve_free(e);
   gsl_odeiv_control_free(c);
   gsl_odeiv_step_free(s);

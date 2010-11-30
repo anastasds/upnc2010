@@ -4,31 +4,9 @@
 #include "neuron.h"
 #include "stimulate.h"
 
-/*
-void stimulate(struct stimuli * stimuli, double start, double end, int direct, double current)
-{
-  struct stimulus * new_stimulus = (struct stimulus *)malloc(sizeof(struct stimulus));
-  new_stimulus->from = start;
-  new_stimulus->to = end;
-  new_stimulus->direct = direct;
-  new_stimulus->current = current;
-  new_stimulus->next = NULL;
-
-  if(stimuli->head == NULL)
-    {
-      stimuli->head = new_stimulus;
-      stimuli->tail = new_stimulus;
-    }
-  else
-    {
-      stimuli->tail->next = new_stimulus;
-      stimuli->tail = new_stimulus;
-    }
-}
-*/
-
 void stimulate(struct network * network, long num_neuron, long num_compartment, double start, double end, int direct, double current)
 {
+  if(start == end) return;
   struct stimulus * new_stimulus = (struct stimulus *)malloc(sizeof(struct stimulus));
   new_stimulus->from = start;
   new_stimulus->to = end;
@@ -37,12 +15,58 @@ void stimulate(struct network * network, long num_neuron, long num_compartment, 
   new_stimulus->next = NULL;
 
   append_stimulus(network->neurons[num_neuron]->compartments[num_compartment]->stimuli, new_stimulus);
+
+  new_stimulus = (struct stimulus *)malloc(sizeof(struct stimulus));
+  new_stimulus->from = start;
+  new_stimulus->to = end;
+  new_stimulus->direct = direct;
+  new_stimulus->current = current;
+  new_stimulus->next = NULL;
   append_stimulus(network->stimuli, new_stimulus);
+}
+
+void identify_discontinuities(struct network * network)
+{
+  long i = 0, uniques = 1, j = 0;
+  if(network->stimuli == NULL || network->stimuli->length == 0) return;
+  double *discontinuities,* times = (double *)malloc(network->stimuli->length * 2 * sizeof(double));
+  struct stimulus * stim = network->stimuli->head;
+  while(stim != NULL)
+    {
+      times[i] = stim->from;
+      times[i+1] = stim->to;
+      if(times[i] == 0.0) times[i] = times[i+1];
+      stim = stim->next;
+      i += 2;
+    }
+  qsort((void*)times,network->stimuli->length * 2,sizeof(double),compare_doubles);
+  for(i = 0; i < network->stimuli->length * 2 - 1; i++)
+      if(times[i] != times[i+1])
+	uniques+=1;
+
+  discontinuities = (double *)malloc(uniques * sizeof(double));
+  discontinuities[0] = times[0];
+  for(i = 0; j < uniques-1; i++)
+    {
+      if(times[i] != discontinuities[j])
+	discontinuities[++j] = times[i];
+    }
+  free(times);
+  network->discontinuities = discontinuities;
+  network->num_discontinuities = uniques;
+  network->passed_discontinuities = 0;
+
+}
+
+int compare_doubles(const void * a, const void * b)
+{
+  return (*((double*)a) <= *((double*)b)) ? -1 : 1;
 }
 
 void append_stimulus(struct stimuli * stimuli, struct stimulus * stimulus)
 {
- if(stimuli->head == NULL)
+  stimuli->length++;
+  if(stimuli->head == NULL)
     {
       stimuli->head = stimulus;
       stimuli->tail = stimulus;
@@ -87,7 +111,6 @@ void init_stimuli(struct network * network, char * filename)
 	network->stimuli = init_stimuli_struct();
 
       stimulate(network, num_neuron, num_compartment, start, end, direct, current);
-      //stimulate(network->neurons[num_neuron]->compartments[num_compartment]->stimuli, start, end, direct, current);
 
       fgets(line, MAX_LINE_LEN, fp);
       remove_newline(line);
@@ -101,6 +124,7 @@ struct stimuli * init_stimuli_struct()
   struct stimuli * stimuli = (struct stimuli *)malloc(sizeof(struct stimuli));
   stimuli->head = NULL;
   stimuli->tail = NULL;
+  stimuli->length = 0;
   return stimuli;
 }
 
@@ -124,6 +148,7 @@ void destroy_stimuli(struct stimuli * stimuli)
 {
   if(stimuli == NULL)
     return;
+
   struct stimulus * tmp;
   while((tmp = stimuli->head) != NULL)
     {
