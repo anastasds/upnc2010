@@ -334,6 +334,11 @@ void destroy_network(struct network * network)
 	  free(network->neurons[i]->compartments[k]->state->names);
 	  free(network->neurons[i]->compartments[k]->state->values);
 	  free(network->neurons[i]->compartments[k]->state);
+	  if(network->neurons[i]->compartments[k]->buffer != NULL && network->neurons[i]->compartments[k]->buffer->values != NULL)
+	    {
+	      free(network->neurons[i]->compartments[k]->buffer->values);
+	      free(network->neurons[i]->compartments[k]->buffer);
+	    }
 	  destroy_stimuli(network->neurons[i]->compartments[k]->stimuli);
 	  if(network->neurons[i]->compartments[k]->num_links > 0)
 	    {
