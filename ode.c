@@ -174,12 +174,12 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 	{ 
 	  // print voltage, [Ca]
 	  printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
-
+	  /*
 	  //print gating variables
 	  for(j = 10; j < 18; j++)
 	    printf("%lf ",y[num_state_params * i + j]);
 	  printf("%lf ",y[num_state_params * i + 25]);
-
+	  */
 	  // print synaptic plasticity values
 	  for(j = 0; j < 6; j++)
 	    printf("%lf ",y[num_state_params* i  + 26 + j]);
@@ -189,7 +189,6 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 	  // f_pre, i_Ca_NMDA, m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow,
 	  // s_AMPA_rise, s_AMPA_fast, s_AMPA_slow
 	  print_buffer(network->neurons[(i - (i % network->compartments)) / network->compartments]->compartments[i % network->compartments]->buffer);
-	  
 	}
       printf("\n");
       

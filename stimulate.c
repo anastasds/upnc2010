@@ -4,6 +4,7 @@
 #include "neuron.h"
 #include "stimulate.h"
 
+/*
 void stimulate(struct stimuli * stimuli, double start, double end, int direct, double current)
 {
   struct stimulus * new_stimulus = (struct stimulus *)malloc(sizeof(struct stimulus));
@@ -22,6 +23,34 @@ void stimulate(struct stimuli * stimuli, double start, double end, int direct, d
     {
       stimuli->tail->next = new_stimulus;
       stimuli->tail = new_stimulus;
+    }
+}
+*/
+
+void stimulate(struct network * network, long num_neuron, long num_compartment, double start, double end, int direct, double current)
+{
+  struct stimulus * new_stimulus = (struct stimulus *)malloc(sizeof(struct stimulus));
+  new_stimulus->from = start;
+  new_stimulus->to = end;
+  new_stimulus->direct = direct;
+  new_stimulus->current = current;
+  new_stimulus->next = NULL;
+
+  append_stimulus(network->neurons[num_neuron]->compartments[num_compartment]->stimuli, new_stimulus);
+  append_stimulus(network->stimuli, new_stimulus);
+}
+
+void append_stimulus(struct stimuli * stimuli, struct stimulus * stimulus)
+{
+ if(stimuli->head == NULL)
+    {
+      stimuli->head = stimulus;
+      stimuli->tail = stimulus;
+    }
+  else
+    {
+      stimuli->tail->next = stimulus;
+      stimuli->tail = stimulus;
     }
 }
 
@@ -54,7 +83,11 @@ void init_stimuli(struct network * network, char * filename)
       if(network->neurons[num_neuron]->compartments[num_compartment]->stimuli == NULL)
 	network->neurons[num_neuron]->compartments[num_compartment]->stimuli = init_stimuli_struct();
       
-      stimulate(network->neurons[num_neuron]->compartments[num_compartment]->stimuli, start, end, direct, current);
+      if(network->stimuli == NULL)
+	network->stimuli = init_stimuli_struct();
+
+      stimulate(network, num_neuron, num_compartment, start, end, direct, current);
+      //stimulate(network->neurons[num_neuron]->compartments[num_compartment]->stimuli, start, end, direct, current);
 
       fgets(line, MAX_LINE_LEN, fp);
       remove_newline(line);

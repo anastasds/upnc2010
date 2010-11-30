@@ -26,7 +26,7 @@ tau_Ca 200.0
 Mg_conc 2.0
 Ca_resting_conc_soma 0.05
 Ca_resting_conc_spine 0.07
-Phi 0.01
+Phi 0.1
 beta_soma 0.083
 beta_spine 0.083
 eta_buff 6.0 
@@ -64,8 +64,8 @@ p 0.3
 d 0.01
 
 @STIMULI
-0 0 0 0 0.1 62.5
-0 1 1 10 11 62.5
+0 1 1 0 1 62.5
+0 0 0 60 60.1 62.5
 
 @DEFAULT_STATE 0
 32
