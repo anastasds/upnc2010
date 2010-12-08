@@ -10,12 +10,17 @@ double max(double a, double b)
   return a >= b ? a : b;
 }
 
+double min(double a, double b)
+{
+  return a <= b ? a : b;
+}
+
 double Na_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double alpha_m, beta_m, tau_m, m_inf;
   double alpha_h, beta_h, tau_h, h_inf;
   double g_bar_Na, E_Na;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
   
   g_bar_Na = y[offset + 2];
   E_Na = network->neurons[num_neuron]->params->values[1];
@@ -120,7 +125,7 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
 {
   double alpha_n, beta_n, tau_n, n_inf;
   double g_bar_K, E_K;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_K = y[offset + 4];
   E_K = network->neurons[num_neuron]->params->values[2];
@@ -198,7 +203,7 @@ double A_current(struct network * network, long num_neuron, long num_compartment
 {
   double a_inf, tau_a, b_inf, tau_b;
   double g_bar_A, E_A;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_A = y[offset + 3];
   E_A = network->neurons[num_neuron]->params->values[3];
@@ -301,7 +306,7 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   // par qma=.00048,qmb=.28,qhat=1
   double qma = .00048 , qmb = 0.28, qhat = 1.0;
   double temperature;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_KCa = y[offset + 5];
   E_K = network->neurons[num_neuron]->params->values[2];
@@ -356,7 +361,7 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
   double T_inf, tau_T;
   double g_bar_CaT, E_Ca, temperature;
   double xx, ghk;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_CaT = y[offset + 6];
   E_Ca = network->neurons[num_neuron]->params->values[5];
@@ -471,7 +476,7 @@ double heav(double x)
 double L_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double g_bar_L, E_L;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_L = y[offset + 1];
   E_L = network->neurons[num_neuron]->params->values[4];
@@ -490,8 +495,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   double Phi_NMDA, tau_NMDA_rise, tau_NMDA_fast, tau_NMDA_slow, tau_Ca;
   double f_pre;
 
-  long num_state_params = network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
-  long offset = num_neuron * network->compartments * num_state_params + num_compartment * num_state_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   g_bar_NMDA_Ca = y[offset + 7];
   g_bar_NMDA_syn = y[offset + 8];
@@ -528,7 +532,8 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
       // par block=0.062 blockCa=0.124
       // mNMDA=    1/(1.0+0.3*Mg*exp(-block*vSpin))
       m_NMDA_syn =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.062 * y[offset]));
-      
+      // note: this actually first apperas in destexhe et al 1994
+
       s_NMDA_rise = y[offset + 19];
       s_NMDA_fast = y[offset + 20];
       s_NMDA_slow = y[offset + 21];
@@ -539,7 +544,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
       // iCaNMDA=-gCaNMDA*sNMDA*mCaNMDA*(vSpin-vCaNMDA)
       i_Ca_NMDA = -1.0 * g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_Ca);
 
-      f_pre = presynaptic_activity(network, num_neuron, num_compartment, t);
+      f_pre = presynaptic_activity(network, num_neuron, num_compartment, f, y, t);
 
       network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = f_pre;
       network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[11] = i_Ca_NMDA;
@@ -596,13 +601,13 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
   double s_AMPA_rise, s_AMPA_fast, s_AMPA_slow, s_AMPA;
   double Phi_AMPA, tau_AMPA_rise, tau_AMPA_fast, tau_AMPA_slow;
   double g_bar_AMPA, E_AMPA_syn, f_pre;
-  long offset = num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
   if(num_compartment == 0)
     {
       g_bar_AMPA = y[offset + 9];
       E_AMPA_syn = network->neurons[num_neuron]->params->values[7];
-      f_pre = presynaptic_activity(network, num_neuron, num_compartment, t);
+      f_pre = presynaptic_activity(network, num_neuron, num_compartment, f, y, t);
       
       // AMPAR, from Rubin et al. 2005
       s_AMPA_rise = y[offset + 22];
@@ -648,22 +653,87 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
     }
 }
 
-double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, double t)
+double square_wave_f_pre(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
-  struct stimulus * stimulus = NULL;
   long i, from_neuron, from_compartment;
   double presyn_V;
-
-  if((stimulus = apply_stimulus(network, num_neuron, num_compartment, t)) != NULL && stimulus->direct == 0)
-    return 1.0;
 
   for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
     {
       from_neuron = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from;
       from_compartment = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from_compartment;
-      presyn_V = network->neurons[from_neuron]->compartments[from_compartment]->state->values[0];
-      if(presyn_V >= 0)
-	return 1.0;
+
+      //presyn_V = network->neurons[from_neuron]->compartments[from_compartment]->state->values[0];
+      long from_offset = calc_y_array_offset(network, from_neuron, from_compartment);
+      presyn_V = y[from_offset];
+
+      if(presyn_V >= 38.0)
+	{
+	  return 1.0;
+	}
     }
   return 0.0;
+}
+
+double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+{
+  struct stimulus * stimulus = NULL;
+  if((stimulus = apply_stimulus(network, num_neuron, num_compartment, t)) != NULL && stimulus->direct == 0)
+    return 1.0;
+
+  //return square_wave_f_pre(network, num_neuron, num_compartment, f, y, t);
+  return destexhe_transmitter_release(network, num_neuron, num_compartment, f, y, t);
+}
+
+double destexhe_transmitter_release(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+{
+  // based on Destexhe et al. 1994, "Simplification of the Release Process" section, p. 208
+  long from_offset, offset = calc_y_array_offset(network, num_neuron, num_compartment);
+  double L = 0.0;
+  double L_max = network->neurons[num_neuron]->params->values[61];
+  double V_p = network->neurons[num_neuron]->params->values[60];
+  double K_p = network->neurons[num_neuron]->params->values[59];
+  double V_pre = 0.0;
+  long i, from_neuron, from_compartment;
+
+  for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
+    {
+      from_neuron = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from;
+      from_compartment = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->from_compartment;
+      from_offset = calc_y_array_offset(network, from_neuron, from_compartment);
+      V_pre = y[from_offset];
+      L += L_max / (1.0 + exp(-(V_pre - V_p)/K_p));
+    }
+  
+  L = min(L, L_max);
+  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = L;
+
+  return L;
+}
+
+double dayan_abbott_f_pre(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+{
+  //return square_wave(network, num_neuron, num_compartment, t);
+  // compartment 0 is the spine
+  if(num_compartment != 0)
+    return 0.0;
+
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
+  double input = square_wave_f_pre(network, num_neuron, num_compartment, f, y, t);
+  double alpha_s = network->neurons[num_neuron]->params->values[57];
+  double beta_s = network->neurons[num_neuron]->params->values[58];
+
+  if(input > 0.1)
+    alpha_s = network->neurons[num_neuron]->params->values[56];
+
+  f[offset + 32] = alpha_s*(1 - y[offset + 32]) - beta_s*y[offset + 32];
+
+  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = y[offset + 32];
+
+  return y[offset + 32];
+}
+
+long calc_y_array_offset(struct network * network, long num_neuron, long num_compartment)
+{
+  return num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
 }

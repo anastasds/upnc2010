@@ -510,7 +510,7 @@ void link_neurons(struct network * network, char * filename)
 	{
 	  sscanf(line, "%ld %ld %ld %ld", &from, &from_compartment, &to, &to_compartment);
 	  if(DEBUG > 1)
-	    printf("found link to neuron %ld compartment %ld\n",to, to_compartment);
+	    printf("found link to neuron %ld compartment %ld from neuron %ld compartment %ld\n",to, to_compartment, from, from_compartment);
 	  network->neurons[to]->compartments[to_compartment]->num_links++;
 	  links_found++;
 	}

@@ -5,7 +5,7 @@
 0 100
 
 @PARAMS
-56
+62
 C_m 1.0
 E_Na 60.0
 E_K -80.0
@@ -62,13 +62,19 @@ alpha_b 5.0
 c_d 4
 p 0.3
 d 0.01
+alpha_s_open 0.93
+alpha_s_closed 0.0
+beta_s 0.19
+K_p 5.0
+V_p 2.0
+L_max 0.285714
 
 @STIMULI
 0 1 1 0 1 62.5
-0 0 0 60 60.1 62.5
+1 1 1 10 11 62.5
 
 @DEFAULT_STATE 0
-32
+33
 V -70.07
 g-bar_L 0.1
 g-bar_Na 7.0
@@ -101,9 +107,10 @@ A 0.00153
 B 0
 D 0
 W 0.03393
+P_s 0.0
 
 @DEFAULT_STATE 1
-32
+33
 V -70.07
 g-bar_L 0.1
 g-bar_Na 30.0
@@ -136,10 +143,11 @@ A 0
 B 0
 D 0
 W 0
+P_s 0.0
 
 @INIT_STATES
 
 
 @LINKS
 defined
-
+0 1 1 0 0.5 0.5
