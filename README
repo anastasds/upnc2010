@@ -32,6 +32,9 @@ CONFIG FILE
 [long num_neuron] [long num_compartment] [int 0_for_electrode_current_or_1_for_presynaptic_input] [double from_time] [double to_time] [double electrode_current]
 ...
 
+@TETANUS
+[long num_neuron] [long num_compartment] [int direct?] [double start_time] [double stimulus_length] [double stimulus_current] [double periodicity]
+
 @DEFAULT_STATE [long compartment_number]
 [int number_of_params_for_each_compartment]
 [char * param_name] [ float param_value]

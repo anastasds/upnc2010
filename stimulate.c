@@ -22,6 +22,7 @@ void stimulate(struct network * network, long num_neuron, long num_compartment, 
   new_stimulus->direct = direct;
   new_stimulus->current = current;
   new_stimulus->next = NULL;
+
   append_stimulus(network->stimuli, new_stimulus);
 }
 
@@ -76,6 +77,36 @@ void append_stimulus(struct stimuli * stimuli, struct stimulus * stimulus)
       stimuli->tail->next = stimulus;
       stimuli->tail = stimulus;
     }
+}
+
+void prepare_tetanus(struct network * network, char * filename)
+{
+  long num_neuron, num_compartment;
+  double start, length, current, periodicity, i;
+  int direct;
+  char line[MAX_LINE_LEN];
+  FILE * fp = open_file_to_section(filename,"@TETANUS");
+
+  fgets(line, MAX_LINE_LEN, fp);
+  remove_newline(line);
+
+  while(strcmp(line,"") != 0 && strcmp(line,"0") != 0)
+    {
+      sscanf(line, "%ld %ld %d %lf %lf %lf %lf", &num_neuron, &num_compartment, &direct, &start, &length, &periodicity, &current);
+      if(network->neurons[num_neuron]->compartments[num_compartment]->stimuli == NULL)
+	network->neurons[num_neuron]->compartments[num_compartment]->stimuli = init_stimuli_struct();
+      
+      if(network->stimuli == NULL)
+	network->stimuli = init_stimuli_struct();
+
+      for(i = start; i < network->runtime[1]; i += periodicity)
+	{
+	  stimulate(network, num_neuron, num_compartment, i, i + length, direct, current);
+	}
+      fgets(line, MAX_LINE_LEN, fp);
+      remove_newline(line);
+    }
+  fclose(fp);
 }
 
 void init_stimuli(struct network * network, char * filename)

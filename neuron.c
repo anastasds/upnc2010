@@ -358,6 +358,7 @@ void destroy_network(struct network * network)
   destroy_stimuli(network->stimuli);
   if(network->num_discontinuities != 0)
     free(network->discontinuities);
+  free(network->runtime);
   free(network);
 }
 

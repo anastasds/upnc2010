@@ -56,6 +56,7 @@ struct network {
   struct neuron ** neurons;
   struct stimuli * stimuli;
   double * discontinuities;
+  double * runtime;
 };
 
 struct neuron_link {
