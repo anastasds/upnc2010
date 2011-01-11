@@ -265,12 +265,78 @@ void init_nondefault_states(struct network * network, char * filename)
   free(line);
 }
 
+struct neuron_link_state * prepare_default_link_state(struct network * network, char * filename)
+{
+  struct neuron_link_state * state = (struct neuron_link_state *)malloc(sizeof(struct neuron_link_state));
+  FILE * fp;
+  char line[MAX_LINE_LEN];
+  char ** names;
+  double * values;
+  long i = 0, num_params = 0;
+  
+  fp = open_file_to_section(filename, "@DEFAULT_LINK_STATE");
+  fscanf(fp, "%ld", &num_params);
+  
+  state->num_params = num_params;
+  state->names = (char **)malloc(num_params * sizeof(char *));
+  state->values = (double *)malloc(num_params * sizeof(double));
+  
+  for(i = 0; i < state->num_params; i++)
+    {
+      fscanf(fp, "%s", line);
+      fscanf(fp, "%lf", &(state->values[i]));
+      state->names[i] = (char *)malloc((strlen(line) + 1) * sizeof(char));
+      strcpy(state->names[i], line);
+    }
+  fclose(fp);
+  return state;
+}
+
+struct neuron_link_state * copy_link_state(struct neuron_link_state * source)
+{
+  long i = 0;
+  struct neuron_link_state * new_state = (struct neuron_link_state *)malloc(sizeof(struct neuron_link_state));
+
+  new_state->num_params = source->num_params;
+  new_state->names = (char **)malloc(new_state->num_params * sizeof(char *));
+  new_state->values = (double *)malloc(new_state->num_params * sizeof(double));
+  for(i = 0; i < new_state->num_params; i++)
+    {
+      new_state->names[i] = (char *)malloc((strlen(source->names[i]) + 1) * sizeof(char));
+      strcpy(new_state->names[i],source->names[i]);
+      new_state->values[i] = source->values[i];
+    }
+  return new_state;
+}
+
+void prepare_link_states(struct network * network, char * filename)
+{
+  struct neuron_link_state * default_state = prepare_default_link_state(network, filename);
+  long i,j,k;
+  for(i = 0; i < network->size; i++)
+    {
+      for(j = 0; j < network->compartments; j++)
+	{
+	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	    {
+	      network->neurons[i]->compartments[j]->links[k]->state = copy_link_state(default_state);
+	    }
+	}
+    }
+  for(i = 0; i < default_state->num_params; i++)
+    free(default_state->names[i]);
+  free(default_state->names);
+  free(default_state->values);
+  free(default_state);
+	 
+}
+
 // malloc()s a new struct neuron_state;
 // copies all struct elements from given neuron_state to the new one;
 // returns pointer to new neuron_state
 struct compartment_state * copy_compartment_state(struct compartment_state * init_compartment_state)
 {
-  int i = 0;
+  long i = 0;
   struct compartment_state * new_state = (struct compartment_state *)malloc(sizeof(struct compartment_state));
 
   new_state->num_params = init_compartment_state->num_params;
@@ -289,9 +355,18 @@ struct compartment_state * copy_compartment_state(struct compartment_state * ini
 // this means that neuron_params values are constant throughout the network
 void assoc_network_params(struct network * network, struct neuron_params * params)
 {
-  long i;
+  long i,j,k;
   for(i = 0; i < network->size; i++)
-    network->neurons[i]->params = params;
+    {
+      network->neurons[i]->params = params;
+      for(j = 0; j < network->compartments; j++)
+	{
+	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	    {
+	      network->neurons[i]->compartments[j]->links[k]->params = params;
+	    }
+	}
+    }
 }
 
 // cleanup function
@@ -326,7 +401,7 @@ void destroy_init_compartment_states(struct init_compartment_states * init_compa
 // cleanup function
 void destroy_network(struct network * network)
 {
-  long i, j, k, m;
+  long i, j, k, m, n;
 
   for(i = 0; i < network->size; i++)
     {
@@ -346,7 +421,14 @@ void destroy_network(struct network * network)
 	  if(network->neurons[i]->compartments[k]->num_links > 0)
 	    {
 	      for(m = 0; m < network->neurons[i]->compartments[k]->num_links; m++)
-		free(network->neurons[i]->compartments[k]->links[m]);
+		{
+		  for(n = 0; n < network->neurons[i]->compartments[k]->links[m]->state->num_params; n++)
+		    free(network->neurons[i]->compartments[k]->links[m]->state->names[n]);
+		  free(network->neurons[i]->compartments[k]->links[m]->state->names);
+		  free(network->neurons[i]->compartments[k]->links[m]->state->values);
+		  free(network->neurons[i]->compartments[k]->links[m]->state);
+		  free(network->neurons[i]->compartments[k]->links[m]);
+		}
 	      free(network->neurons[i]->compartments[k]->links);
 	    }
 	  free(network->neurons[i]->compartments[k]);
@@ -566,6 +648,8 @@ struct neuron_link * create_link(long from, long from_compartment, long to, long
   link->to_compartment = to_compartment;
   link->weight = weight;
   link->conduction_time = ctime;
+  link->recently_fired = FALSE;
+  link->last_fired = -1.0;
 
   if(DEBUG > 1)
     printf("* link: neuron %ld compartment %ld to neuron %ld compartment %ld, wieght %lf, ctime %lf\n", from, from_compartment, to, to_compartment, weight, ctime);

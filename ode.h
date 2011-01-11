@@ -10,5 +10,6 @@ void * ode_update_neurons_threaded(void * thread_params);
 void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f, double t);
 int ode_run(struct network * network, double t, double t1, double step_size, double error);
 int hh_ode (double t, const double y[], double f[], void *params);
+long get_ode_system_dimension(struct network * network);
 
 #endif

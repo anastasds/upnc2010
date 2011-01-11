@@ -735,5 +735,5 @@ double dayan_abbott_f_pre(struct network * network, long num_neuron, long num_co
 
 long calc_y_array_offset(struct network * network, long num_neuron, long num_compartment)
 {
-  return num_neuron * network->compartments * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params + num_compartment * network->neurons[num_neuron]->compartments[num_compartment]->state->num_params;
+  return network->neurons[num_neuron]->compartments[num_compartment]->ode_system_offset;
 }

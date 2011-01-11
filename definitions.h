@@ -6,4 +6,5 @@
 #define FALSE 0
 #define DEFAULT_CONFIG_FILE "template.txt"
 #define BUFFER_SIZE 20
+#define WINDOW 10
 #endif

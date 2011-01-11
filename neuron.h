@@ -18,6 +18,7 @@ struct buffer {
 struct neuron {
   struct neuron_compartment ** compartments;
   struct neuron_params * params;
+  long ode_system_offset;
 };
 
 struct neuron_compartment {
@@ -29,6 +30,7 @@ struct neuron_compartment {
   struct neuron_link ** links;
   long spike_count;
   int flag;
+  long ode_system_offset;
 };
 
 struct compartment_state {
@@ -66,6 +68,17 @@ struct neuron_link {
   long to_compartment;
   double weight;
   double conduction_time;
+  struct neuron_link_state * state;
+  struct neuron_params * params;
+  long ode_system_offset;
+  int recently_fired;
+  double last_fired;
+};
+
+struct neuron_link_state {
+  int num_params;
+  char ** names;
+  double * values;
 };
 
 struct link_queue {
@@ -123,5 +136,8 @@ void init_nondefault_states(struct network * network, char * filename);
 void print_network(struct network * network);
 struct buffer * allocate_buffer(int size);
 void print_buffer(struct buffer * buffer);
+void prepare_link_states(struct network * network, char * filename);
+struct neuron_link_state * copy_link_state(struct neuron_link_state * source);
+struct neuron_link_state * prepare_default_link_state(struct network * network, char * filename);
 
 #endif

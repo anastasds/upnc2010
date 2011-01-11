@@ -20,8 +20,9 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 {
   double C_m, I_e, i_m;
   double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in, i_coup;
-  long i, j, k, offset, num_state_params, limit = start + num;
+  long i, j, k, l, limit = start + num;
   double coupling_factor;
+  long neuron_offset, compartment_offset, link_offset, from_neuron, from_compartment;
   struct neuron_params * network_params;
   struct stimulus * stimulus;
 
@@ -33,20 +34,26 @@ void ode_update_neurons(struct network * network, long start, long num, const do
   C_m = network_params->values[0];
   coupling_factor = network_params->values[28];
 
-  num_state_params = network->neurons[start]->compartments[0]->state->num_params;
-
   for(i = start; i < limit; i++)
     for(j = 0; j < network->compartments; j++)
       {
-	offset = num_state_params * network->compartments * i + num_state_params * j;
+	compartment_offset = network->neurons[i]->compartments[j]->ode_system_offset;
 	for(k = 0; k < network->neurons[i]->compartments[j]->state->num_params; k++)
-	  network->neurons[i]->compartments[j]->state->values[k] = y[offset + k];   
+	  network->neurons[i]->compartments[j]->state->values[k] = y[compartment_offset + k];   
+	for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	  {
+	    link_offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
+	    for(l = 0; l < network->neurons[i]->compartments[j]->links[k]->state->num_params; l++)
+	      network->neurons[i]->compartments[j]->links[k]->state->values[l] = y[link_offset + l];
+	  }
       }
   
   for(i = start; i < limit; i++)
     {
+      neuron_offset = network->neurons[i]->ode_system_offset;
       for(j = 0; j < network->compartments; j++)
 	{
+	  compartment_offset = network->neurons[i]->compartments[j]->ode_system_offset;
 	  stimulus = NULL;
 	  I_e = network_params->values[26];
 	  if((stimulus = apply_stimulus(network, i, j, t)) != NULL)
@@ -54,8 +61,6 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	      if(stimulus->direct == 1)
 		I_e = stimulus->current;
 	    }
-
-	  offset = num_state_params * network->compartments * i + num_state_params * j;
 
 	  // figure out individual currents
 	  i_Na = Na_current(network,i,j,f,y,t);
@@ -71,12 +76,14 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  if(j == 0)
 	    {
 	      i_in = 1.0*(i_NMDA + i_AMPA);
-	      i_coup = 1.0*coupling_factor*(y[offset + num_state_params] - y[offset]);
+	      //i_coup = 1.0*coupling_factor*(y[offset + num_state_params] - y[offset]);
+	      i_coup = coupling_factor * (y[network->neurons[i]->compartments[1]->ode_system_offset] - y[compartment_offset]);
 	    }
 	  else
 	    {
 	      i_in = I_e;
-	      i_coup = 1.0*coupling_factor*(y[offset - num_state_params] - y[offset]);
+	      //i_coup = 1.0*coupling_factor*(y[offset - num_state_params] - y[offset]);
+	      i_coup = coupling_factor * (y[network->neurons[i]->compartments[0]->ode_system_offset] - y[compartment_offset]);
 	    }
 
 	  
@@ -97,44 +104,68 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
 	  
 	  // update derivatives (first state variable is voltage)
-	  if(network->neurons[i]->compartments[j]->flag == -1)
+	  if(network->neurons[i]->compartments[j]->flag == FALSE)
 	    {
-	      if(y[offset] > 0)
+	      if(y[compartment_offset] > 0)
 		{
-		  network->neurons[i]->compartments[j]->flag = 1;
+		  network->neurons[i]->compartments[j]->flag = TRUE;
 		  network->neurons[i]->compartments[j]->spike_count++;
 		}
 	    }
 	  else
 	    {
-	      if(y[offset] < -10)
-		network->neurons[i]->compartments[j]->flag = -1;
+	      if(y[compartment_offset] < -10)
+		network->neurons[i]->compartments[j]->flag = FALSE;
 	    }
-	  f[offset] = i_m/C_m;
+	  f[compartment_offset] = i_m/C_m;
 	  
 	  // keep conductances constant
 	  for(k = 1; k < 10; k++)
-	    f[k] = 0.0;
+	    f[compartment_offset + k] = 0.0;
 
 	  // detector system (compartment 0 is the spine)
 	  if(j == 0)
 	    {
-	      f[offset + 26] = evolve_P(network,y,offset);
-	      f[offset + 27] = evolve_V(network,y,offset);
-	      f[offset + 28] = evolve_A(network,y,offset);
-	      f[offset + 29] = evolve_B(network,y,offset);
-	      f[offset + 30] = evolve_D(network,y,offset);
-	      f[offset + 31] = evolve_W(network,y,offset);
-	    }
-	  else
-	    {
-	      for(k = 0; k < 6; k++)
+	      for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
 		{
-		  f[offset + 26 + k] = 0.0;
+		  from_neuron = network->neurons[i]->compartments[k]->links[k]->from;
+		  from_compartment = network->neurons[i]->compartments[k]->links[k]->from_compartment;
+		  if(network->neurons[from_neuron]->compartments[from_compartment]->flag == TRUE)
+		    {
+		      network->neurons[i]->compartments[j]->links[k]->recently_fired = TRUE;
+		      network->neurons[i]->compartments[j]->links[k]->last_fired = t;
+		    }
+
+		  if(abs(network->neurons[i]->compartments[j]->links[k]->last_fired - t) > WINDOW)
+		    network->neurons[i]->compartments[j]->links[k]->recently_fired = FALSE;
+
+		  link_offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
+		  f[link_offset + 0] = evolve_P(network,i,j,k,y);
+		  f[link_offset + 1] = evolve_V(network,i,j,k,y);
+		  f[link_offset + 2] = evolve_A(network,i,j,k,y);
+		  f[link_offset + 3] = evolve_B(network,i,j,k,y);
+		  f[link_offset + 4] = evolve_D(network,i,j,k,y);
+		  f[link_offset + 5] = evolve_W(network,i,j,k,y);
 		}
 	    }
 	}
     }
+}
+
+long get_ode_system_dimension(struct network * network)
+{
+  long i = 0, j = 0, k = 0, total = 0;
+  for(i = 0; i < network->size; i++)
+    {
+      for(j = 0; j < network->compartments; j++)
+	{
+	  total += network->neurons[i]->compartments[j]->state->num_params;
+	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	      total += network->neurons[i]->compartments[j]->links[k]->state->num_params;
+	}
+    }
+
+  return total;
 }
 
 int ode_run(struct network * network, double t, double t1, double step_size, double error)
@@ -143,8 +174,7 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
   //const gsl_odeiv_step_type * T = gsl_odeiv_step_rk8pd;
   const gsl_odeiv_step_type * T = gsl_odeiv_step_rkf45;
-  long i, j, k, num_state_params = network->neurons[0]->compartments[0]->state->num_params;
-  long dimension = network->size * network->compartments * num_state_params;
+  long i, j, k, l, dimension = get_ode_system_dimension(network), counter = 0;
   int status;
   
   gsl_odeiv_step * s = gsl_odeiv_step_alloc(T, dimension);
@@ -158,11 +188,29 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
     gsl_odeiv_system sys = {hh_ode, NULL, dimension, network};
   #endif
 
-  double y[num_state_params * network->size * network->compartments];
+  double y[dimension];
   for(i = 0; i < network->size; i++)
-    for(j = 0; j < network->compartments; j++)
-      for(k = 0; k < num_state_params; k++)
-	y[num_state_params * network->compartments * i + num_state_params * j + k] = network->neurons[i]->compartments[j]->state->values[k];
+    {
+      network->neurons[i]->ode_system_offset = counter;
+      for(j = 0; j < network->compartments; j++)
+	{
+	  network->neurons[i]->compartments[j]->ode_system_offset = counter;
+	  for(k = 0; k < network->neurons[i]->compartments[j]->state->num_params; k++)
+	    {
+	      y[counter] = network->neurons[i]->compartments[j]->state->values[k];
+	      counter++;
+	    }
+	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	    {
+	      network->neurons[i]->compartments[j]->links[k]->ode_system_offset = counter;
+	      for(l = 0; l < network->neurons[i]->compartments[j]->links[k]->state->num_params; l++)
+		{
+		  y[counter] = network->neurons[i]->compartments[j]->links[k]->state->values[l];
+		  counter++;
+		}
+	    }
+	}
+    }
 
   if(network->num_discontinuities != 0)
     {
@@ -178,30 +226,11 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       if(status != GSL_SUCCESS)
 	break;
 
-      //debug
       printf("%lf ", t);
-      for(i = 0; i < network->size * network->compartments; i++)
-	{ 
-	  // print voltage, [Ca]
-	  printf("%lf %lf ",y[num_state_params * i], y[num_state_params * i + 18]);
-	  
-	  //print gating variables
-	  for(j = 10; j < 18; j++)
-	    printf("%lf ",y[num_state_params * i + j]);
-	  printf("%lf ",y[num_state_params * i + 25]);
-	  
-	  // print synaptic plasticity values
-	  for(j = 0; j < 6; j++)
-	    printf("%lf ",y[num_state_params* i  + 26 + j]);
-	  
-	  // print buffer (currently: holds various current values)
-	  // order: i_Na, i_Kdr, i_A, i_KCa, i_CaT, i_L, i_NMDA, i_AMPA, i_in, i_coup,
-	  // f_pre, i_Ca_NMDA, m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow,
-	  // s_AMPA_rise, s_AMPA_fast, s_AMPA_slow
-	  print_buffer(network->neurons[(i - (i % network->compartments)) / network->compartments]->compartments[i % network->compartments]->buffer);
-	}
+      for(i = 0; i < network->size; i++)
+	for(j = 0; j < network->compartments; j++)
+	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
       printf("\n");
-
       if(t >= t1 && network->num_discontinuities != 0)
 	{
 	  if(network->num_discontinuities - network->passed_discontinuities != 1)

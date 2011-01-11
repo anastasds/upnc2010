@@ -19,6 +19,7 @@ int main(int argc, char** argv)
   init_nondefault_states(network, input_filename);
   assoc_network_params(network, params);
   link_neurons(network, input_filename);
+  prepare_link_states(network, input_filename);
   prepare_tetanus(network, input_filename);
 
   identify_discontinuities(network);
