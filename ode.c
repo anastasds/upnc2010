@@ -226,11 +226,8 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
       if(status != GSL_SUCCESS)
 	break;
 
-      printf("%lf ", t);
-      for(i = 0; i < network->size; i++)
-	for(j = 0; j < network->compartments; j++)
-	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
-      printf("\n");
+      output_data(network,t,y);
+
       if(t >= t1 && network->num_discontinuities != 0)
 	{
 	  if(network->num_discontinuities - network->passed_discontinuities != 1)
@@ -255,6 +252,28 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
   */
 
   return 0;
+}
+
+void output_data(struct network * network, double t, const double * y)
+{
+  long i, j, k, l, offset;
+  printf("%lf ", t);
+  for(i = 0; i < network->size; i++)
+    {
+      for(j = 0; j < network->compartments; j++)
+	{
+	  //printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
+	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
+	    {
+	      for(l = 0; l < network->neurons[i]->compartments[j]->links[k]->state->num_params; l++)
+		{
+		  offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
+		  printf("%lf ",y[offset + l]);
+		}
+	    }
+	}
+    }
+  printf("\n");
 }
 
 int hh_ode(double t, const double y[], double f[], void *params)

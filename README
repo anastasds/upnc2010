@@ -33,7 +33,7 @@ CONFIG FILE
 ...
 
 @TETANUS
-[long num_neuron] [long num_compartment] [int direct?] [double start_time] [double stimulus_length] [double stimulus_current] [double periodicity]
+[long num_neuron] [long num_compartment] [int direct?] [double start_time] [double stimulus_length] [double periodicity] [double stimulus_current]
 
 @DEFAULT_STATE [long compartment_number]
 [int number_of_params_for_each_compartment]

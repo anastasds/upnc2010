@@ -726,11 +726,11 @@ double dayan_abbott_f_pre(struct network * network, long num_neuron, long num_co
   if(input > 0.1)
     alpha_s = network->neurons[num_neuron]->params->values[56];
 
-  f[offset + 32] = alpha_s*(1 - y[offset + 32]) - beta_s*y[offset + 32];
+  f[offset + 26] = alpha_s*(1 - y[offset + 26]) - beta_s*y[offset + 26];
 
-  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = y[offset + 32];
+  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = y[offset + 26];
 
-  return y[offset + 32];
+  return y[offset + 26];
 }
 
 long calc_y_array_offset(struct network * network, long num_neuron, long num_compartment)
