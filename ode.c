@@ -128,8 +128,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	    {
 	      for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
 		{
-		  from_neuron = network->neurons[i]->compartments[k]->links[k]->from;
-		  from_compartment = network->neurons[i]->compartments[k]->links[k]->from_compartment;
+		  from_neuron = network->neurons[i]->compartments[j]->links[k]->from;
+		  from_compartment = network->neurons[i]->compartments[j]->links[k]->from_compartment;
 		  if(network->neurons[from_neuron]->compartments[from_compartment]->flag == TRUE)
 		    {
 		      network->neurons[i]->compartments[j]->links[k]->recently_fired = TRUE;
@@ -256,19 +256,31 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
 
 void output_data(struct network * network, double t, const double * y)
 {
-  long i, j, k, l, offset;
+  long i, j, k, l, a, offset;
   printf("%lf ", t);
   for(i = 0; i < network->size; i++)
     {
+      if(i != network->size - 1) continue;
       for(j = 0; j < network->compartments; j++)
 	{
-	  //printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
+	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
+	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + 18]);
+	  for(a = 0; a < 10; a++)
+	    {
+	      printf("%lf ",network->neurons[i]->compartments[j]->buffer->values[a]);
+	    }
+	  for(a = 10; a < 18; a++)
+	    {
+	      printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + a]);
+	    }
+	  if(j == 0)
+	      printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + 19]);
 	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
 	    {
 	      for(l = 0; l < network->neurons[i]->compartments[j]->links[k]->state->num_params; l++)
 		{
 		  offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
-		  printf("%lf ",y[offset + l]);
+		  //printf("%lf ",y[offset + l]);
 		}
 	    }
 	}

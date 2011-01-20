@@ -9,10 +9,10 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
 double L_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaT);
 double AMPA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
-double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
+double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, long num_link,  double * f, const double * y, double t);
 double square_wave_f_pre(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double dayan_abbott_f_pre(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
-double destexhe_transmitter_release(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
+double destexhe_transmitter_release(struct network * network, long num_neuron, long num_compartment, long num_link, double * f, const double * y, double t);
 long calc_y_array_offset(struct network * network, long num_neuron, long num_compartment);
 double eff(double z);
 double eff2(double z);
