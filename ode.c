@@ -71,6 +71,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  i_L = L_current(network,i,j,f,y,t);
 	  i_NMDA = NMDA_current(network,i,j,f,y,t,i_CaT);
 	  i_AMPA = AMPA_current(network,i,j,f,y,t);
+	  diffuse_calcium(network,i,j,f,y,t);
 
 	  // compartment 0 is the spine
 	  if(j == 0)
@@ -260,7 +261,7 @@ void output_data(struct network * network, double t, const double * y)
   printf("%lf ", t);
   for(i = 0; i < network->size; i++)
     {
-      if(i != network->size - 1) continue;
+      if(i != network->size - 1 && i != 0) continue;
       for(j = 0; j < network->compartments; j++)
 	{
 	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);

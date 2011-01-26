@@ -525,6 +525,9 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   // compartment 0 is spine, 1 is soma
   if(num_compartment == 0)
     {
+      if(network->neurons[num_neuron]->compartments[num_compartment]->num_links == 0)
+	f[offset + 18] = Phi * (i_Ca) - beta_spine * (y[offset + 18] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 18],2.0) - beta_buff * y[offset + 18];
+
       for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
 	{
 	  link_offset = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->ode_system_offset;
@@ -565,7 +568,8 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
 	  // par chiRstSo=0.05 chiRstSp=0.07 PhiSoma=0.1 PhiSpin=0.1 betaSoma=0.083 betaSpin=0.083 CaTauSoSp=1000
 	  // par st=-100, buff=0
 	  // ChiSpin' = PhiSpin*(iCaSpin+iCaNMDA)-betaspin*(ChiSpin-ChiRstSp)-(betaspin/nonc)*ChiSpin^2-buff*ChiSpin
-	  f[offset + 18] = Phi * (i_Ca + i_Ca_NMDA) - beta_spine * (y[offset + 18] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 18],2.0) - beta_buff * y[offset + 18];
+
+	  f[link_offset + 12] = Phi * (i_Ca + i_Ca_NMDA) - beta_spine * (y[link_offset + 12] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[link_offset + 12],2.0) - beta_buff * y[link_offset + 12];
 	  
 	  // par speedup=20 nmdarate=2 ndf=10 nds=45
 	  // sNMDArise'=-speedup*(1-sNMDAfast-sNMDAslow)*fpre(t)-(1/nmdarate)*sNMDArise
@@ -736,4 +740,28 @@ double dayan_abbott_f_pre(struct network * network, long num_neuron, long num_co
 long calc_y_array_offset(struct network * network, long num_neuron, long num_compartment)
 {
   return network->neurons[num_neuron]->compartments[num_compartment]->ode_system_offset;
+}
+
+void diffuse_calcium(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+{
+
+  if(num_compartment != 0)
+    return;
+
+  long num_pre = network->neurons[num_neuron]->compartments[num_compartment]->num_links;
+  if(num_pre == 0)
+    return;
+
+  double ca_diffusion_rate = network->neurons[num_neuron]->params->values[25];
+  double avg_calcium = 0.0;
+  long i, comp_offset, offset = calc_y_array_offset(network, num_neuron, num_compartment);;
+
+  for(i = 0; i < num_pre; i++)
+      avg_calcium += y[network->neurons[num_neuron]->compartments[num_compartment]->links[i]->ode_system_offset + 12];
+
+  avg_calcium = avg_calcium / num_pre;
+
+  comp_offset = network->neurons[num_neuron]->compartments[num_compartment]->ode_system_offset;
+
+  f[comp_offset + 18] = (avg_calcium - y[comp_offset + 18]);
 }
