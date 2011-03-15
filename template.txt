@@ -2,10 +2,10 @@
 2 2
 
 @RUNTIME
-0 30000
+0 300
 
 @PARAMS
-62
+79
 C_m 1.0
 E_Na 60.0
 E_K -80.0
@@ -26,7 +26,7 @@ tau_Ca 200.0
 Mg_conc 2.0
 Ca_resting_conc_soma 0.05
 Ca_resting_conc_spine 0.07
-Phi 0.1
+Phi 0.01
 beta_soma 0.083
 beta_spine 0.083
 eta_buff 6.0 
@@ -68,84 +68,76 @@ beta_s 0.19
 K_p 5.0
 V_p 2.0
 L_max 0.285714
+g-bar_L-spine 0.1
+g-bar_L-soma 0.1
+g-bar_Na-spine 7.0
+g-bar_Na-soma 30.0
+g-bar_A-spine 12.0
+g-bar_A-soma 7.5
+g-bar_Kdr-spine 0.867
+g-bar_Kdr-soma 14.0
+g-bar_KCa-spine 0.0
+g-bar_KCa-soma 25.0
+g-bar_CaL-spine 25.0
+g-bar_CaL-soma 7.0
+g-bar_NMDA_Ca 25.0
+g-bar_NMDA_syn 0.3
+g-bar_AMPA 0.05
+g-bar_CaT-spine 0.0
+g-bar_CaT-soma 0.0
 
 @STIMULI
 
 @TETANUS
-0 1 1 0 1 1000 62.5
-1 1 1 10 1 1000 62.5
+0 1 1 100 1 1000 62.5
+1 1 1 110 1 1000 62.5
 
 @DEFAULT_STATE 0
-33
+13
 V -70.07
-g-bar_L 0.1
-g-bar_Na 7.0
-g-bar_A 12.0
-g-bar_Kdr 0.867
-g-bar_KCa 0.0
-g-bar_CaT 25.0
-g-bar_NMDA_Ca 25.0
-g-bar_NMDA_syn 0.3
-g-bar_AMPA 0.05
 n 0.00000
 m 0.00004
 h 0.99979
 a 0.00112
 b 0.30055
 c 0.0
-S 0.0
-T 0.99947
+s 0.0
+t 0.99947
 Ca_conc 0.07
-s_NMDA_rise 0.0
-s_NMDA_fast 0.0
-s_NMDA_slow 0.0
-s_AMPA_rise 0.0
-s_AMPA_fast 0.0
-s_AMPA_slow 0.0
-i 0.99435
+i 0.993854
+u 0.002145
+v 0.061934
+
+@DEFAULT_STATE 1
+12
+V -70.07
+n 0.0
+m 0.00004
+h 0.99979
+a 0.000112
+b 0.30055
+c 0.0
+s 0.0
+t 0.99947
+Ca_conc 0.05
+u 0.002151
+v 0.0061868
+
+@DEFAULT_LINK_STATE
+13
 P 0
 V 0
 A 0.00153
 B 0
 D 0
 W 0.03393
-P_s 0.0
-
-@DEFAULT_STATE 1
-33
-V -70.07
-g-bar_L 0.1
-g-bar_Na 30.0
-g-bar_A 7.5
-g-bar_Kdr 14.0
-g-bar_KCa 25.0
-g-bar_CaT 7.0
-g-bar_NMDA_Ca 0.0
-g-bar_NMDA_syn 0.0
-g-bar_AMPA 0.0
-n 0.00015
-m 0.0029
-h 0.99971
-a 0.00035
-b 0.99671
-c 0.0000
-S 0.000002
-T 1.0000
-Ca_conc 0.05
 s_NMDA_rise 0.0
 s_NMDA_fast 0.0
 s_NMDA_slow 0.0
 s_AMPA_rise 0.0
 s_AMPA_fast 0.0
 s_AMPA_slow 0.0
-i 0.0
-P 0
-V 0
-A 0
-B 0
-D 0
-W 0
-P_s 0.0
+Ca 0.07
 
 @INIT_STATES
 

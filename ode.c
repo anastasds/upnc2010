@@ -19,7 +19,7 @@ void * ode_update_neurons_threaded(void * thread_params)
 void ode_update_neurons(struct network * network, long start, long num, const double * y, double * f, double t)
 {
   double C_m, I_e, i_m;
-  double i_L, i_Kdr, i_A, i_KCa, i_CaT, i_Na, i_NMDA, i_AMPA, i_in, i_coup;
+  double i_L, i_Kdr, i_A, i_KCa, i_CaL,i_Na, i_NMDA, i_AMPA, i_in, i_coup, i_CaT;
   long i, j, k, l, limit = start + num;
   double coupling_factor;
   long neuron_offset, compartment_offset, link_offset, from_neuron, from_compartment;
@@ -67,9 +67,11 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  i_Kdr = Kdr_current(network,i,j,f,y,t);
 	  i_A = A_current(network,i,j,f,y,t);
 	  i_KCa = KCa_current(network,i,j,f,y,t);
+	  i_CaL = CaL_current(network,i,j,f,y,t);
 	  i_CaT = CaT_current(network,i,j,f,y,t);
 	  i_L = L_current(network,i,j,f,y,t);
-	  i_NMDA = NMDA_current(network,i,j,f,y,t,i_CaT);
+	  i_NMDA = NMDA_current(network,i,j,f,y,t,i_CaL + i_CaT);
+	  //i_NMDA = NMDA_current(network,i,j,f,y,t,i_CaL);
 	  i_AMPA = AMPA_current(network,i,j,f,y,t);
 	  diffuse_calcium(network,i,j,f,y,t);
 
@@ -93,7 +95,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  network->neurons[i]->compartments[j]->buffer->values[1] = i_Kdr;
 	  network->neurons[i]->compartments[j]->buffer->values[2] = i_A;
 	  network->neurons[i]->compartments[j]->buffer->values[3] = i_KCa;
-	  network->neurons[i]->compartments[j]->buffer->values[4] = i_CaT;
+	  network->neurons[i]->compartments[j]->buffer->values[4] = i_CaL;
 	  network->neurons[i]->compartments[j]->buffer->values[5] = i_L;
 	  network->neurons[i]->compartments[j]->buffer->values[6] = i_NMDA;
 	  network->neurons[i]->compartments[j]->buffer->values[7] = i_AMPA;
@@ -102,7 +104,7 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  
 
 	  // membrane current
-	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaT + i_Na + i_in + i_coup;
+	  i_m = i_L + i_Kdr + i_A + i_KCa + i_CaL + i_Na + i_in + i_coup;
 	  
 	  // update derivatives (first state variable is voltage)
 	  if(network->neurons[i]->compartments[j]->flag == FALSE)
@@ -121,8 +123,8 @@ void ode_update_neurons(struct network * network, long start, long num, const do
 	  f[compartment_offset] = i_m/C_m;
 	  
 	  // keep conductances constant
-	  for(k = 1; k < 10; k++)
-	    f[compartment_offset + k] = 0.0;
+	  //for(k = 1; k < 10; k++)
+	  //f[compartment_offset + k] = 0.0;
 
 	  // detector system (compartment 0 is the spine)
 	  if(j == 0)
@@ -246,43 +248,75 @@ int ode_run(struct network * network, double t, double t1, double step_size, dou
   gsl_odeiv_control_free(c);
   gsl_odeiv_step_free(s);
   
-  /*
-  for(i = 0; i < network->size; i++)
-    for(j = 0; j < network->compartments; j++)
-      printf("%ld %ld %ld\n",i,j,network->neurons[i]->compartments[j]->spike_count);
-  */
-
   return 0;
 }
 
 void output_data(struct network * network, double t, const double * y)
 {
+  int print_spine_v = 1;
+  int print_spine_ca = 0;
+  int print_spine_gating = 0;
+  int print_spine_currents = 0;
+  int print_soma_v = 1;
+  int print_soma_ca = 0;
+  int print_soma_gating = 0;
+  int print_soma_currents = 0;
+  int print_link_plasticity_all = 0;
+  int print_link_plasticity_w = 0;
+  int print_link_ca = 0;
+  int print_link_gating = 0;
+  long print_after_t = -1;
+  long print_before_t = -1;
+  
   long i, j, k, l, a, offset;
+  
+  if(t < print_after_t || (print_before_t != -1 && t > print_before_t))
+    return;
+
   printf("%lf ", t);
   for(i = 0; i < network->size; i++)
     {
-      if(i != network->size - 1 && i != 0) continue;
       for(j = 0; j < network->compartments; j++)
 	{
-	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
-	  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + 18]);
-	  for(a = 0; a < 10; a++)
-	    {
+	  if((print_spine_v == 1 && j == 0) || (print_soma_v == 1 && j == 1))
+	    printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset]);
+	  if((print_spine_ca == 1 && j == 0) || (print_soma_ca == 1 && j == 1))
+	    printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + 9]);
+	  
+	  if((print_spine_currents == 1 && j == 0) || (print_soma_currents == 1 && j == 1))
+	    for(a = 0; a < 10; a++)
 	      printf("%lf ",network->neurons[i]->compartments[j]->buffer->values[a]);
-	    }
-	  for(a = 10; a < 18; a++)
+	  
+	  if((print_spine_gating == 1 && j == 0) || (print_soma_gating == 1 && j == 1))
 	    {
-	      printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + a]);
+	      for(a = 1; a < 13; a++)
+		if(a == 9 || (j == 1 && a == 12))
+		  continue;
+		else
+		  printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + a]);
 	    }
-	  if(j == 0)
-	      printf("%lf ",y[network->neurons[i]->compartments[j]->ode_system_offset + 19]);
+	  
 	  for(k = 0; k < network->neurons[i]->compartments[j]->num_links; k++)
 	    {
-	      for(l = 0; l < network->neurons[i]->compartments[j]->links[k]->state->num_params; l++)
+	      if(print_link_ca == 1)
+		printf("%lf ",y[network->neurons[i]->compartments[j]->links[k]->ode_system_offset + 12]);
+	      if(print_link_plasticity_all == 1)
+		for(l = 0; l < 6; l++)
+		  {
+		    offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
+		    printf("%lf ",y[offset + l]);
+		  }
+	      else if(print_link_plasticity_w == 1)
 		{
 		  offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
-		  //printf("%lf ",y[offset + l]);
+		  printf("%lf",y[offset + 5]);
 		}
+	      if(print_link_gating == 1)
+		for(l = 6; l < 12; l++)
+		  {
+		    offset = network->neurons[i]->compartments[j]->links[k]->ode_system_offset;
+		    printf("%lf ",y[offset + l]);
+		  }
 	    }
 	}
     }

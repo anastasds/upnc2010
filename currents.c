@@ -22,7 +22,6 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   double g_bar_Na, E_Na;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
   
-  g_bar_Na = y[offset + 2];
   E_Na = network->neurons[num_neuron]->params->values[1];
 
   /*
@@ -52,6 +51,8 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
+      g_bar_Na = network->neurons[num_neuron]->params->values[64];
+
       // M_Spininf=1/(1+exp((-vSpin-40)/3))
       M_Spininf = 1.0 / (1.0 + exp((y[offset] + 40.0)/ -3.0));
 
@@ -73,19 +74,21 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
       I_Spintau = max(0.1,(0.00333 * exp(0.0024 * (y[offset] + 60.0) * Q))/(1.0 + exp(0.0012 * (y[offset] + 60.0) * Q)));
             
       // M_Spin'=(M_Spininf-M_Spin)/(M_Spintau)
-      f[offset + 11] = (M_Spininf - y[offset + 11]) / (M_Spintau);
+      f[offset + 2] = (M_Spininf - y[offset + 2]) / (M_Spintau);
 
       // H_Spin'=(H_Spininf-H_Spin)/(H_Spintau)
-      f[offset + 12] = (H_Spininf - y[offset + 12]) / (H_Spintau);
+      f[offset + 3] = (H_Spininf - y[offset + 3]) / (H_Spintau);
 
       // I_Spin'=(I_Spininf-I_Spin)/(I_Spintau)
-      f[offset + 19] = (I_Spininf - y[offset + 19]) / (I_Spintau);
+      f[offset + 10] = (I_Spininf - y[offset + 10]) / (I_Spintau);
 
       // iNaspin=-gNaSpin*M_Spin^2*H_Spin*I_Spin*(vspin-vNa)
-      return -1.0 * g_bar_Na * y[offset + 11] * y[offset + 11] * y[offset + 12] * y[offset + 19] * (y[offset] - E_Na);
+      return -1.0 * g_bar_Na * y[offset + 2] * y[offset + 2] * y[offset + 3] * y[offset + 10] * (y[offset] - E_Na);
     }
   else
     {
+      g_bar_Na = network->neurons[num_neuron]->params->values[65];
+
       // alphams(v)=  0.32*(-46.9-v)/(exp((-46.9-v)/4.0)-1.0)
       alphams = 0.32 * (-46.9 - y[offset])/(exp( (-46.9 - y[offset]) / 4.0) - 1.0);
 
@@ -108,17 +111,17 @@ double Na_current(struct network * network, long num_neuron, long num_compartmen
       H_Somatau = 1.0;
 
       // no M_Soma' in code
-      f[offset + 11] = 0.0;
+      f[offset + 2] = 0.0;
 
       // H_Soma'=alphahs(vSoma)-(alphahs(vSoma)+betahs(vSoma))*H_Soma
-      f[offset + 12] = alphahs - (alphahs + betahs) * y[offset + 12];
+      f[offset + 3] = alphahs - (alphahs + betahs) * y[offset + 3];
 
       // no I for soma
       // removed from compartment
-      //f[offset + 19] = 0.0;
+      //f[offset + 10] = 0.0;
 
       // iNaSoma=-gNaSoma*M_Soma(vSoma)^2*H_Soma*(vSoma-vNa)
-      return -1.0 * g_bar_Na * M_Soma * M_Soma * y[offset + 12] * (y[offset] - E_Na);
+      return -1.0 * g_bar_Na * M_Soma * M_Soma * y[offset + 3] * (y[offset] - E_Na);
     }
 }
 
@@ -128,7 +131,6 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   double g_bar_K, E_K;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
-  g_bar_K = y[offset + 4];
   E_K = network->neurons[num_neuron]->params->values[2];
 
   /*
@@ -149,6 +151,8 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
+      g_bar_K = network->neurons[num_neuron]->params->values[68];
+
       // N_Spininf=1/(1+exp((-vSpin-42)/2))
       N_Spininf = 1.0/(1.0 + exp((y[offset] + 42.0) / -2.0));
 
@@ -156,13 +160,15 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
       N_Spintau = 2.2;
 
       // N_Spin'=(N_Spininf-N_Spin)/(N_Spintau)
-      f[offset + 10] = (N_Spininf - y[offset + 10]) / (N_Spintau);
+      f[offset + 1] = (N_Spininf - y[offset + 1]) / (N_Spintau);
 
       // iKdrSpin=-gKdrSpin*N_Spin^2*(vspin-vK)
-      return -1.0 * g_bar_K * y[offset + 10] * y[offset + 10] * (y[offset] - E_K);
+      return -1.0 * g_bar_K * y[offset + 1] * y[offset + 1] * (y[offset] - E_K);
     }
   else
     {
+      g_bar_K = network->neurons[num_neuron]->params->values[69];
+
       // alphans(v)=  0.016*(-24.9-v)/(exp((-24.9-v)/5.0)-1.0)
       alphans = 0.016*(-24.9-y[offset])/(exp((-24.9-y[offset])/5.0)-1.0);
 
@@ -176,10 +182,10 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
       N_Somatau = 3.5;
 
       // N_Soma'=alphans(vSoma)-(alphans(vSoma)+betans(vSoma))*N_Soma
-      f[offset + 10] = alphans - (alphans + betans) * y[offset + 10];
+      f[offset + 1] = alphans - (alphans + betans) * y[offset + 1];
 
       // iKdrSoma=-gKdrSoma*N_Soma*(vSoma-vK)
-      return -1.0 * g_bar_K * y[offset + 10]  * (y[offset] - E_K);
+      return -1.0 * g_bar_K * y[offset + 1]  * (y[offset] - E_K);
     }
 
 }
@@ -206,7 +212,6 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   double g_bar_A, E_A;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
-  g_bar_A = y[offset + 3];
   E_A = network->neurons[num_neuron]->params->values[3];
 
   /*
@@ -242,6 +247,8 @@ double A_current(struct network * network, long num_neuron, long num_compartment
   // compartment 0 is the spine
   if(num_compartment == 0)
     {
+      g_bar_A = network->neurons[num_neuron]->params->values[66];
+
       // A_SpnAlf=exp(asap*zeta(vSpin)*(vSpin+1)*Q)
       A_SpnAlf = exp(asap*zeta(y[offset])*(y[offset]+1.0)*Q);
 
@@ -261,13 +268,15 @@ double A_current(struct network * network, long num_neuron, long num_compartment
       B_Spintau = btaumod * max(inact3 * (y[offset] + inact4),inact5);
 
       // A_Spin'=(A_Spininf-A_Spin)/(A_Spintau)
-      f[offset + 13] = (A_Spininf - y[offset + 13]) / (A_Spintau);
+      f[offset + 4] = (A_Spininf - y[offset + 4]) / (A_Spintau);
 
       // B_Spin'=(B_Spininf-B_Spin)/(B_Spintau)
-      f[offset + 14] = (B_Spininf - y[offset + 14]) / (B_Spintau);
+      f[offset + 5] = (B_Spininf - y[offset + 5]) / (B_Spintau);
     }
   else
     {
+      g_bar_A = network->neurons[num_neuron]->params->values[67];
+
       // A_SmaAlf=exp(0.001*zeta(vSoma)*(vSoma-11)*Q)
       A_SmaAlf = exp(0.001*zeta(y[offset])*(y[offset]-11.0)*Q);
 
@@ -287,15 +296,15 @@ double A_current(struct network * network, long num_neuron, long num_compartment
       B_Somatau = btaumod * max(0.11*(y[offset]+62.0),2.0);
 
       // A_Soma'=(A_Somainf-A_Soma)/(A_Somatau)
-      f[offset + 13] = (A_Somainf - y[offset + 13])/(A_Somatau);
+      f[offset + 4] = (A_Somainf - y[offset + 4])/(A_Somatau);
 
       // B_Soma'=(B_Somainf-B_Soma)/(B_Somatau)
-      f[offset + 14] = (B_Somainf - y[offset + 14])/(B_Somatau);
+      f[offset + 5] = (B_Somainf - y[offset + 5])/(B_Somatau);
     }
 
   // iKaSoma=-gKaSoma*A_Soma*B_Soma*(vSoma-vK)
   // iKaSpin=-gKaSpin*A_Spin*B_Spin*(vspin-vK)
-  return -1.0 * g_bar_A * y[offset + 13] * y[offset + 14] * (y[offset] - E_A);
+  return -1.0 * g_bar_A * y[offset + 4] * y[offset + 5] * (y[offset] - E_A);
 
 }
 
@@ -309,7 +318,6 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   double temperature;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
-  g_bar_KCa = y[offset + 5];
   E_K = network->neurons[num_neuron]->params->values[2];
   temperature = network->neurons[num_neuron]->params->values[27];
 
@@ -326,19 +334,22 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
   // calcium-dependent potassium current, from Rubin et al. 2005
   if(num_compartment == 0)
     {
-      f[offset + 15] = 0.0;
+      g_bar_KCa = network->neurons[num_neuron]->params->values[70];
+      f[offset + 6] = 0.0;
       return 0.0;
     }
   else
     {
+      g_bar_KCa = network->neurons[num_neuron]->params->values[71];
+
       // Q=96480/(8.315*(273.16+tempC))
       Q = 96480.0 / (8.315 * (273.16 + temperature));
 
       // Qm_SmaAlf=qma*Chisoma/(0.001*Chisoma+0.18*exp(-1.68*vSoma*Q))
-      Qm_SmaAlf = qma * y[offset + 18] / (0.001 * y[offset + 18] + 0.18 * exp(-1.68 * y[offset] * Q));
+      Qm_SmaAlf = qma * y[offset + 9] / (0.001 * y[offset + 9] + 0.18 * exp(-1.68 * y[offset] * Q));
 
       // Qm_SmaBet=(qmb*exp(-0.022*vSoma*Q))/(exp(-0.022*vSoma*Q)+0.001*Chisoma)
-      Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 18]);
+      Qm_SmaBet = (qmb * exp(-0.022 * y[offset] * Q)) / (exp(-0.022 * y[offset] * Q) + 0.001 * y[offset + 9]);
       
       // Qm_Smatau=1/(Qm_SmaAlf+Qm_SmaBet)
       Qm_Smatau = 1.0 / (Qm_SmaAlf + Qm_SmaBet);
@@ -347,24 +358,95 @@ double KCa_current(struct network * network, long num_neuron, long num_compartme
       Qm_Smainf = qhat * Qm_SmaAlf * Qm_Smatau;
       
       // Qm_Soma'=(Qm_Smainf-Qm_Soma)/(Qm_Smatau)
-      f[offset + 15] = (Qm_Smainf - y[offset + 15]) / (Qm_Smatau);
+      f[offset + 6] = (Qm_Smainf - y[offset + 6]) / (Qm_Smatau);
       
       // iKahpmSma=-gKmahpSma*Qm_Soma*(vSoma-vK)
-      return -1.0 * g_bar_KCa * y[offset + 15] * (y[offset] - E_K);
+      return -1.0 * g_bar_KCa * y[offset + 6] * (y[offset] - E_K);
     }
   
 }
 
+double CaT_f(double z)
+{
+  if(abs(z) < 0.0001)
+    return 1.0 - (z/2.0);
+  else
+    return z / (exp(z) - 1);
+}
+
+//from Poirazi et al. 2003
 double CaT_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
+{
+  //spine
+  //u 0.002145
+  //v 0.061934
+
+  //soma
+  //u 0.002151
+  //v 0.0061868
+
+
+  double g_bar_CaT;
+  double ghk, Q, Ca_resting_conc;
+  double alpha_u, beta_u, u_inf, tau_u;
+  double alpha_v, beta_v, v_inf, tau_v;
+  long offset = calc_y_array_offset(network, num_neuron, num_compartment);
+  double temperature = network->neurons[num_neuron]->params->values[27];
+  double x = 0.0853 * (273.16 + temperature) / 2;
+
+  if(num_compartment == 0)
+    {
+      g_bar_CaT = network->neurons[num_neuron]->params->values[77];
+      Ca_resting_conc = network->neurons[num_neuron]->params->values[19];
+
+      alpha_u = -0.196 * (y[offset] - 19.88) / (exp((y[offset] - 19.88) / -10.0) - 1);
+      beta_u = 0.046 * exp(y[offset] / -22.73);
+      u_inf = alpha_u / (alpha_u + beta_u);
+      tau_u = 1.0 / (alpha_u + beta_u);
+
+      alpha_v = 0.00016 * exp((y[offset] + 57.0) / -19.0);
+      beta_v = 1.0 / (1.0 + exp((y[offset] - 15.0) / -10));
+      v_inf = alpha_v / (alpha_v + beta_v);
+      tau_v = 1.0 / (0.68 * (alpha_v + beta_v));
+
+      f[offset + 11] = (u_inf - y[offset + 11]) / tau_u;
+      f[offset + 12] = (v_inf - y[offset + 12]) / tau_v;
+
+      ghk = -1.0 * x * (1 - y[offset + 9] / Ca_resting_conc * exp(y[offset] / x)) * CaT_f(y[offset] / x);
+      return -1.0 * g_bar_CaT * pow(y[offset + 19],2) * y[offset + 12] / (1 + 1000 * y[offset + 9]) * ghk;
+    }
+  else
+    {
+      g_bar_CaT = network->neurons[num_neuron]->params->values[78];
+      Ca_resting_conc = network->neurons[num_neuron]->params->values[18];
+
+      alpha_u = -0.196 * (y[offset] - 19.88) / (exp((y[offset] - 19.88) / -10.0) - 1);
+      beta_u = 0.046 * exp(y[offset] / -22.73);
+      u_inf = alpha_u / (alpha_u + beta_u);
+      tau_u = 1.0 / (alpha_u + beta_u);
+
+      alpha_v = 0.00016 * exp((y[offset] + 57.0) / -19.0);
+      beta_v = 1.0 / (1.0 + exp((y[offset] - 15.0) / -10));
+      v_inf = alpha_v / (alpha_v + beta_v);
+      tau_v = 1.0 / (0.68 * (alpha_v + beta_v));
+
+      f[offset + 10] = (u_inf - y[offset + 10]) / tau_u;
+      f[offset + 11] = (v_inf - y[offset + 11]) / tau_v;
+      
+      ghk = -1.0 * x * (1 - y[offset + 9] / Ca_resting_conc * exp(y[offset] / x)) * CaT_f(y[offset] / x);
+      return -1.0 * g_bar_CaT * pow(y[offset + 10],2) * y[offset + 11] / (1 + 1000 * y[offset + 9]) * ghk;
+    }
+}
+
+double CaL_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t)
 {
   double S, T;
   double alpha_S, beta_S, S_inf, tau_S;
   double T_inf, tau_T;
-  double g_bar_CaT, E_Ca, temperature;
+  double g_bar_CaL, E_Ca, temperature;
   double xx, ghk;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
-  g_bar_CaT = y[offset + 6];
   E_Ca = network->neurons[num_neuron]->params->values[5];
   temperature = network->neurons[num_neuron]->params->values[27];
 
@@ -384,12 +466,14 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
   f[offset + 16] = (M_inf - y[offset + 16])/(tau_M);
   f[offset + 17] = (H_inf - y[offset + 17])/(tau_H);
 
-  return -1.0*(g_bar_CaT * pow(y[offset + 16], 2.0) * y[offset + 17] * (y[offset] - E_Ca));
+  return -1.0*(g_bar_CaL * pow(y[offset + 16], 2.0) * y[offset + 17] * (y[offset] - E_Ca));
   */
 
   // CaL from Rubin et al. 2005
   if(num_compartment == 0)
     {
+      g_bar_CaL = network->neurons[num_neuron]->params->values[72];
+
       // S_Spininf = 1 / (1 + exp(-vSpin - 37))
       S_inf = 1.0 / (1.0 + exp(-1.0 * y[offset] - 37.0));
 
@@ -406,14 +490,16 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
 
       // S_Spin' = (S_Spininf - S_Spin) / (S_Spintau)
       // T_Spin' = (T_Spininf - T_Spin) / (T_Spintau)
-      f[offset + 16] = (S_inf - y[offset + 16]) / tau_S;
-      f[offset + 17] = (T_inf - y[offset + 17]) / tau_T;
+      f[offset + 7] = (S_inf - y[offset + 7]) / tau_S;
+      f[offset + 8] = (T_inf - y[offset + 8]) / tau_T;
 
       // iCaLSpin = -gCaLSpin * S_Spin^3 * T_Spin * (vSpin - vCa)
-      return -1.0 * g_bar_CaT * pow(y[offset + 16], 3.0) * y[offset + 17] * (y[offset] - E_Ca);
+      return -1.0 * g_bar_CaL * pow(y[offset + 7], 3.0) * y[offset + 8] * (y[offset] - E_Ca);
     }
   else
     {
+      g_bar_CaL = network->neurons[num_neuron]->params->values[73];
+
       //Salfa(v)=-0.055*(v+27.01)/(exp((-v-27.01)/3.8)-1)
       alpha_S = -0.055 * (y[offset] + 27.01) / (exp((y[offset] + 27.01)/-3.8) - 1.0);
 
@@ -433,19 +519,19 @@ double CaT_current(struct network * network, long num_neuron, long num_compartme
       tau_T = 0;
 
       // S_Soma'=(S_Somainf-S_Soma)/(S_Somatau)
-      f[offset + 16] = (S_inf - y[offset + 16]) / tau_S;
+      f[offset + 7] = (S_inf - y[offset + 7]) / tau_S;
 
       //f[offset + 17] = (T_inf - y[offset + 17]) / tau_T;
-      f[offset + 17] = 0;
+      f[offset + 8] = 0;
 
       //xx=0.0853*(273.16+tempC)/2
       xx = 0.0853 * (273.16 + temperature) / 2.0;
 
       //ghk(v,chi)=-xx*(1-((chi/Ca)*exp(v/xx)))*eff(v/xx)
-      ghk = -1.0 * xx * (1.0 - ((y[offset + 18] / 2.0) * exp(y[offset] / xx))) * eff(y[offset] / xx);
+      ghk = -1.0 * xx * (1.0 - ((y[offset + 9] / 2.0) * exp(y[offset] / xx))) * eff(y[offset] / xx);
 
       //iCaLSoma=-gCaLSoma*S_Soma*ghk(vSoma,chiSoma)*(1/(1+chisoma))
-      return -1.0 * g_bar_CaT * y[offset + 16] * ghk / (1.0 + y[offset + 18]);
+      return -1.0 * g_bar_CaL * y[offset + 7] * ghk / (1.0 + y[offset + 9]);
     }
 }
 
@@ -479,7 +565,11 @@ double L_current(struct network * network, long num_neuron, long num_compartment
   double g_bar_L, E_L;
   long offset = calc_y_array_offset(network, num_neuron, num_compartment);
 
-  g_bar_L = y[offset + 1];
+  if(num_compartment == 0)
+    g_bar_L = network->neurons[num_neuron]->params->values[62];
+  else
+    g_bar_L = network->neurons[num_neuron]->params->values[63];
+
   E_L = network->neurons[num_neuron]->params->values[4];
 
   // iLeakSoma=-gLeakSoma*(vSoma-vLeak)
@@ -487,7 +577,13 @@ double L_current(struct network * network, long num_neuron, long num_compartment
   return -1.0 * g_bar_L * (y[offset] - E_L);
 }
 
-double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaT)
+double geq1(double x)
+{
+  if(x <= 1.0) return 1.0;
+  return x;
+}
+
+double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaL)
 {
   double current = 0;
   double m_NMDA_Ca, m_NMDA_syn, s_NMDA_rise, s_NMDA_fast, s_NMDA_slow, s_NMDA;
@@ -498,9 +594,9 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   double f_pre;
 
   long i, other_offset, link_offset, offset = calc_y_array_offset(network, num_neuron, num_compartment);
-
-  g_bar_NMDA_Ca = y[offset + 7];
-  g_bar_NMDA_syn = y[offset + 8];
+  
+  g_bar_NMDA_Ca = network->neurons[num_neuron]->params->values[74];
+  g_bar_NMDA_syn = network->neurons[num_neuron]->params->values[75];
   E_Ca = network->neurons[num_neuron]->params->values[5];
   E_NMDA_syn = network->neurons[num_neuron]->params->values[6];
   Mg_conc = network->neurons[num_neuron]->params->values[17];
@@ -520,13 +616,13 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
   Ca_diffusion_rate = network->neurons[num_neuron]->params->values[25];
 
   // i_Ca
-  i_Ca = i_CaT; // i_CaT passed as argument
+  i_Ca = i_CaL; // i_CaL passed as argument
 
   // compartment 0 is spine, 1 is soma
   if(num_compartment == 0)
     {
       if(network->neurons[num_neuron]->compartments[num_compartment]->num_links == 0)
-	f[offset + 18] = Phi * (i_Ca) - beta_spine * (y[offset + 18] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 18],2.0) - beta_buff * y[offset + 18];
+	f[offset + 9] = Phi * (i_Ca) - beta_spine * (y[offset + 9] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[offset + 9],2.0) - beta_buff * y[offset + 9];
 
       for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
 	{
@@ -536,11 +632,11 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
 	  
 	  // par block=0.062 blockCa=0.124
 	  // mCaNMDA=  1/(1.0+0.3*Mg*exp(-blockCa*vSpin))
-	  m_NMDA_Ca =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.124 * y[offset]));
+	  m_NMDA_Ca = 1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.124 * y[offset]));
 	  
 	  // par block=0.062 blockCa=0.124
       // mNMDA=    1/(1.0+0.3*Mg*exp(-block*vSpin))
-	  m_NMDA_syn =  1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.062 * y[offset]));
+	  m_NMDA_syn = 1.0 / (1.0 + 0.3 * Mg_conc * exp(-0.062 * y[offset]));
 	  // note: this actually first apperas in destexhe et al 1994
 	  
 	  s_NMDA_rise = y[link_offset + 6];
@@ -554,7 +650,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
 	  i_Ca_NMDA = -1.0 * g_bar_NMDA_Ca * s_NMDA * m_NMDA_Ca * (y[offset] - E_Ca);
 
 	  f_pre = presynaptic_activity(network, num_neuron, num_compartment, i, f, y, t);
-	  
+
 	  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[10] = f_pre;
 	  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[11] = i_Ca_NMDA;
 	  network->neurons[num_neuron]->compartments[num_compartment]->buffer->values[12] = m_NMDA_Ca;
@@ -570,6 +666,10 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
 	  // ChiSpin' = PhiSpin*(iCaSpin+iCaNMDA)-betaspin*(ChiSpin-ChiRstSp)-(betaspin/nonc)*ChiSpin^2-buff*ChiSpin
 
 	  f[link_offset + 12] = Phi * (i_Ca + i_Ca_NMDA) - beta_spine * (y[link_offset + 12] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[link_offset + 12],2.0) - beta_buff * y[link_offset + 12];
+
+	  other_offset = calc_y_array_offset(network, num_neuron, 1);
+	  //f[link_offset + 12] = i_Ca*(geq1(y[other_offset + 8] / Ca_resting_conc_spine) * Phi) + Phi * i_Ca_NMDA - beta_spine * (y[link_offset + 12] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[link_offset + 12],2.0) - beta_buff * y[link_offset + 12];
+	  //f[link_offset + 12] = i_Ca + Phi * i_Ca_NMDA - beta_spine * (y[link_offset + 12] - Ca_resting_conc_spine) - beta_spine / eta_buff * pow(y[link_offset + 12],2.0) - beta_buff * y[link_offset + 12];
 	  
 	  // par speedup=20 nmdarate=2 ndf=10 nds=45
 	  // sNMDArise'=-speedup*(1-sNMDAfast-sNMDAslow)*fpre(t)-(1/nmdarate)*sNMDArise
@@ -601,7 +701,7 @@ double NMDA_current(struct network * network, long num_neuron, long num_compartm
       // ChiSoma' = PhiSoma*(iCaSoma)-(betaSoma*(ChiSoma-ChiRstSo))+(ChiSpin-ChiSoma)/CaTauSoSp-(betaSoma/nonc)*ChiSoma^2
       
       other_offset = calc_y_array_offset(network, num_neuron, 0);
-      f[offset + 18] = Phi * i_Ca - beta_soma * (y[offset + 18] - Ca_resting_conc_soma) + (y[other_offset + 18] - y[offset + 18]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 18], 2.0);
+      f[offset + 9] = Phi * i_Ca - beta_soma * (y[offset + 9] - Ca_resting_conc_soma) + (y[other_offset + 9] - y[offset + 9]) / Ca_diffusion_rate - beta_soma / eta_buff * pow(y[offset + 9], 2.0);
       return 0.0;
     }
 }
@@ -619,7 +719,7 @@ double AMPA_current(struct network * network, long num_neuron, long num_compartm
       for(i = 0; i < network->neurons[num_neuron]->compartments[num_compartment]->num_links; i++)
 	{
 	  link_offset = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->ode_system_offset;
-	  g_bar_AMPA = y[offset + 9];
+	  g_bar_AMPA = network->neurons[num_neuron]->params->values[76];
 	  E_AMPA_syn = network->neurons[num_neuron]->params->values[7];
 	  f_pre = presynaptic_activity(network, num_neuron, num_compartment, i, f, y, t);
 	  
@@ -702,7 +802,6 @@ double destexhe_transmitter_release(struct network * network, long num_neuron, l
   // based on Destexhe et al. 1994, "Simplification of the Release Process" section, p. 208
   long from_offset, offset = calc_y_array_offset(network, num_neuron, num_compartment);
   double L_max = network->neurons[num_neuron]->params->values[61];
-  double L_max_total = network->neurons[num_neuron]->params->values[62];
   double V_p = network->neurons[num_neuron]->params->values[60];
   double K_p = network->neurons[num_neuron]->params->values[59];
   double V_pre = 0.0;
@@ -712,6 +811,7 @@ double destexhe_transmitter_release(struct network * network, long num_neuron, l
   from_compartment = network->neurons[num_neuron]->compartments[num_compartment]->links[num_link]->from_compartment;
   from_offset = calc_y_array_offset(network, from_neuron, from_compartment);
   V_pre = y[from_offset];
+  //printf("%lf %lf\n", t, L_max / (1.0 + exp(-(V_pre - V_p)/K_p)));
   return L_max / (1.0 + exp(-(V_pre - V_p)/K_p));
 }
 
@@ -754,14 +854,18 @@ void diffuse_calcium(struct network * network, long num_neuron, long num_compart
 
   double ca_diffusion_rate = network->neurons[num_neuron]->params->values[25];
   double avg_calcium = 0.0;
-  long i, comp_offset, offset = calc_y_array_offset(network, num_neuron, num_compartment);;
-
-  for(i = 0; i < num_pre; i++)
-      avg_calcium += y[network->neurons[num_neuron]->compartments[num_compartment]->links[i]->ode_system_offset + 12];
-
-  avg_calcium = avg_calcium / num_pre;
+  long i, link_offset, comp_offset;
 
   comp_offset = network->neurons[num_neuron]->compartments[num_compartment]->ode_system_offset;
 
-  f[comp_offset + 18] = (avg_calcium - y[comp_offset + 18]);
+  for(i = 0; i < num_pre; i++)
+    {
+      link_offset = network->neurons[num_neuron]->compartments[num_compartment]->links[i]->ode_system_offset;
+      avg_calcium += y[link_offset + 12];
+      //f[link_offset + 12] += y[comp_offset + 18] - y[link_offset + 12];
+    }
+
+  avg_calcium = avg_calcium / num_pre;
+
+  f[comp_offset + 9] = (avg_calcium - y[comp_offset + 9]);
 }

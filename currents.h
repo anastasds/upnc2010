@@ -6,8 +6,10 @@ double Kdr_current(struct network * network, long num_neuron, long num_compartme
 double A_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double KCa_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double CaT_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
+double CaT_f(double z);
+double CaL_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double L_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
-double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaT);
+double NMDA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t, double i_CaL);
 double AMPA_current(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);
 double presynaptic_activity(struct network * network, long num_neuron, long num_compartment, long num_link,  double * f, const double * y, double t);
 double square_wave_f_pre(struct network * network, long num_neuron, long num_compartment, double * f, const double * y, double t);

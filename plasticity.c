@@ -13,9 +13,10 @@ double evolve_P(struct network * network, long i, long j, long k, const double *
   double c_p = params->values[39];
   double tau_p = params->values[34];
 
-  double chi_spine = y[compartment_offset + 18];
-  if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
-    chi_spine = params->values[19];
+  //double chi_spine = y[compartment_offset + 18];
+  double chi_spine = y[link_offset + 12];
+  //if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
+  //chi_spine = params->values[19];
 
   double A = y[link_offset + 2];
   double P = y[link_offset + 0];
@@ -31,9 +32,10 @@ double evolve_V(struct network * network, long i, long j, long k, const double *
 
   double tau_v = params->values[36];
 
-  double chi_spine = y[compartment_offset + 18];
-  if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
-    chi_spine = params->values[19];
+  //double chi_spine = y[compartment_offset + 18];
+  double chi_spine = y[link_offset + 12];
+  //if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
+  //chi_spine = params->values[19];
 
   double V = y[link_offset + 1];
 
@@ -48,9 +50,10 @@ double evolve_A(struct network * network, long i, long j, long k, const double *
 
   double tau_a = params->values[35];
 
-  double chi_spine = y[compartment_offset + 18];
-  if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
-    chi_spine = params->values[19];
+  //double chi_spine = y[compartment_offset + 18];
+  double chi_spine = y[link_offset + 12];
+  //if(network->neurons[i]->compartments[j]->links[k]->recently_fired == FALSE)
+  //chi_spine = params->values[19];
 
   double A = y[link_offset + 2];
 
